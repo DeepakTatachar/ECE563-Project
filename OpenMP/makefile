@@ -7,8 +7,8 @@ REL_TARGET := rel.o
 SRC_DIR := ./src
 SOURCES := $(wildcard $(SRC_DIR)/*.cpp)
 
-CXXFLAGS := -fopenmp -ggdb -Wall
-CXXFLAGS_REL := -fopenmp -O3 -Wall
+CXXFLAGS := -fopenmp -ggdb -Wall -std=c++0x
+CXXFLAGS_REL := -fopenmp -O3 -Wall -std=c++0x
 CREATE_FOLDER:= @if [ ! -d "$(BUILD_DIR)" ]; then echo "The $(BUILD_DIR) folder does not exist. Creating $(BUILD_DIR)"; mkdir $(BUILD_DIR) ; fi
 
 .ONESHELL:
