@@ -16,14 +16,14 @@ debug:
 	$(CREATE_FOLDER)
 	@echo "Building Debug ..."
 	@g++ $(CXXFLAGS) $(INCLUDES) $(SOURCES) -o $(BUILD_DIR)/$(DBG_TARGET)
+	@echo "Done!"
 
 .ONESHELL:
 release:
 	$(CREATE_FOLDER)
 	@echo "Building Release ..."
 	@g++ $(CXXFLAGS_REL) $(INCLUDES) $(SOURCES) -o $(BUILD_DIR)/$(REL_TARGET)
-
-
+	@echo "Done!"
 
 clean:
 	@rm -r $(BUILD_DIR)
