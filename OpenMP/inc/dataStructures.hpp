@@ -15,8 +15,17 @@ typedef std::queue<workItem> workQueue;
 
 typedef std::list<workQueue> workQueueList;
 
+typedef workQueueList::const_iterator workQueueListIterator;
+
 
 // Each mapper thread has it own queue
-void InitializeWQList(workQueueList wQList, int mapperThreads);
+void initializeWQList(workQueueList wQList, int mapperThreads);
+
+// Since both the reader and mapper are accessing the workqueue.
+// This is will be a region for contention/bottleneck
+// Writing chinks of work items and reading chunks of workItems will reduce the bottleneck
+void enqueueChunk(workQueue wQ, std::list<workItem> wItems);
+
+std::list<workItem> dequeueChunk(workQueue wQ, int chunkSize);
 
 #endif
