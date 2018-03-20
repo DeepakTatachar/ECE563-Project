@@ -9,15 +9,21 @@
 #include <reader.hpp>
 #endif
 
+#ifndef Mapper_H
+#include <mapper.hpp>
+#endif
 
 int main(int argc, char* argv[])
 {
         workQueueList wQList;
+	workQueueListIterator wQ;
+
         int maxThreads = omp_get_max_threads();
         int readerThreads = maxThreads / 2;
 	int mapperThreads = maxThreads - readerThreads;
 
-	InitializeWQList(wQList, mapperThreads);
+	// Each mapper threads gets its own work queue so we create mapperThread number of workQueues
+	initializeWQList(wQList, mapperThreads);
 
 	#pragma omp parallel
 	{
@@ -29,13 +35,18 @@ int main(int argc, char* argv[])
 				spawnNewReaderThread(wQList);				
 			}
 
-			for(int i = 0; i < mapperThreads; i++)
+			for(wQ = wQList.begin(); wQ != wQList.end(); ++wQ)
 			{
-				//#pragma omp task
-				//spawnNewMapperThread();				
+				#pragma omp task
+				spawnNewMapperThreads(*wQ);
 			}			
 		}
+
+		#pragma omp barrier
+
+		// Do reduce here
 	}
+
 	printf("Hello World!\n");
 	return 0;
 }
