@@ -2,7 +2,7 @@
 # Readme: First argument is the folder with all the text files
 # Second argument is the folder where all the outputs are required
 # Automatically deals with html tags
-# Creats a file with a single line with all the words
+# Creates a file with a single line with all the words
 
 import re
 import sys
@@ -31,7 +31,6 @@ def cleanAndWriteFile(inputFile, outputFile):
 			cleanLines = cleanLines + clean
 
 	finalString = re.sub(' +',' ', cleanLines)
-
 	outFileHandle = open(outputFile, 'w')
 	outFileHandle.write(finalString)
 	outFileHandle.close()
