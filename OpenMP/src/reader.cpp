@@ -1,21 +1,5 @@
 #include <reader.hpp>
 
-workQueueList wQList;
-
-// Decides which mapper gets which workitem
-void arbitrateWorkItems(std::vector<workItem> workItems)
-{
-	if(wQList.empty())
-	{
-		printf("No work queues, are you sure everyting is okay?\n");
-		return;
-	}
-
-	//TODO 
-	// Implement a round robin work distribution scheme to pump work items into work queues
-	// Note current architecture has an arbiter for each reader task/thread.
-}
-
 std::vector<workItem> createWorkItems(std::string line)
 {
 	std::vector<workItem> lineWorkItems;
@@ -39,30 +23,39 @@ std::vector<workItem> createWorkItems(std::string line)
 	return lineWorkItems;
 }
 
-void spawnNewReaderThread(workQueueList wQList, std::string fileName)
+void spawnNewReaderThread()
 {
-	// 1. Readfile until eof.
-	// 2. Break the string into words
-	// 3. Create a work item for each word
-	// 4. Send a chunk of work items to arbitrate
 
-	// Read file as line by line
-	std::string line;
+	std::string fileName = getNextSyncedFileName();
 
-	// File stream handle
-	std::ifstream inputReadFile;
-
-	inputReadFile.open(fileName);
-	if (inputReadFile.is_open())
+	while(fileName.compare(""))
 	{
-		while (getline(inputReadFile, line))
-		{
-			// createWorkItems breaks the string into word and creates workItems
-			arbitrateWorkItems(createWorkItems(line));
-		}
-	}
+		// 1. Readfile until eof.
+		// 2. Break the string into words
+		// 3. Create a work item for each word
+		// 4. Send a chunk of work items to arbitrate
 
-	inputReadFile.close();
+		// Read file as line by line
+		std::string line;
+
+		// File stream handle
+		std::ifstream inputReadFile;
+
+		inputReadFile.open(fileName);
+		if (inputReadFile.is_open())
+		{
+			while (getline(inputReadFile, line))
+			{
+				// createWorkItems breaks the string into word and creates workItems
+				arbitrateWorkItems(createWorkItems(line));
+			}
+		}
+
+		inputReadFile.close();
+
+		// Get the next file to read
+		fileName = getNextSyncedFileName();
+	}
 	
 }
 
