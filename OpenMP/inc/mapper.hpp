@@ -3,6 +3,6 @@
 
 #include <dataStructures.hpp>
 
-void spawnNewMapperThreads(workQueue wQ);
+mappedDictionary spawnNewMapperThreads(workQueue wQ);
 
 #endif
