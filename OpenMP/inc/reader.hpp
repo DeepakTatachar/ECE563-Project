@@ -7,6 +7,6 @@
 #include <sstream>
 #include <vector>
 
-void spawnNewReaderThread(workQueueList wQList, std::string fileName);
+void spawnNewReaderThread();
 
 #endif

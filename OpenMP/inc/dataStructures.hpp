@@ -6,6 +6,8 @@
 #include <queue>
 #include <map>
 #include <cstdlib>
+#include <iostream>
+#include <omp.h>
 
 typedef struct wItem
 {
@@ -24,14 +26,19 @@ typedef workQueueList::const_iterator workQueueListIterator;
 
 typedef std::map<std::string, int> mappedDictionary;
 
-// Each mapper thread has it own queue
-void initializeWQList(workQueueList wQList, int mapperThreads);
-
 // Since both the reader and mapper are accessing the workqueue.
 // This is will be a region for contention/bottleneck
 // Writing chinks of work items and reading chunks of workItems will reduce the bottleneck
-void enqueueChunk(workQueue wQ, std::list<workItem> wItems);
+void enqueueMapperChunk(int id, std::vector<workItem> wItems);
 
-std::list<workItem> dequeueChunk(workQueue wQ, int chunkSize);
+std::list<workItem> dequeueChunk(int id, int chunkSize);
+
+void arbitrateWorkItems(std::vector<workItem> workItems);
+
+std::string getNextSyncedFileName();
+
+void initializeWQStructures(int mapperThreads);
+
+workQueue getWQ(int i);
 
 #endif
