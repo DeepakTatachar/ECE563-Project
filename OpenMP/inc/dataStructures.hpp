@@ -31,14 +31,20 @@ typedef std::map<std::string, int> mappedDictionary;
 // Writing chinks of work items and reading chunks of workItems will reduce the bottleneck
 void enqueueMapperChunk(int id, std::vector<workItem> wItems);
 
-std::list<workItem> dequeueChunk(int id, int chunkSize);
+std::vector<workItem> dequeueMapperChunk(int id, int chunkSize);
+
+void enqueueReducerChunk(int id, std::vector<workItem> wItems);
+
+std::vector<workItem> dequeueReducerChunk(int id, int chunkSize);
 
 void arbitrateWorkItems(std::vector<workItem> workItems);
 
 std::string getNextSyncedFileName();
 
-void initializeWQStructures(int mapperThreads);
+void initializeWQStructures(int mapperThreads, int reducerThreads);
 
-workQueue getWQ(int i);
+workQueue getMapperWQ(int i);
+
+workQueue getReducerWQ(int i);
 
 #endif
