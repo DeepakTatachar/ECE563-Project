@@ -1,6 +1,6 @@
-#include <mapper.hpp>
+#include <reducer.hpp>
 
-void spawnNewMapperThread(workQueue wQ, int numReducerThreads)
+void spawnNewReducerThread(workQueue reducerWQ)
 {
 
 	// TODO

@@ -13,6 +13,10 @@
 #include <mapper.hpp>
 #endif
 
+#ifndef Reducer_H
+#include <reducer.hpp>
+#endif
+
 int main(int argc, char* argv[])
 {
 	workQueueListIterator wQ;
@@ -24,9 +28,8 @@ int main(int argc, char* argv[])
         int readerThreads = maxThreads / 2;
 	int mapperThreads = maxThreads - readerThreads;
 
-	initializeWQStructures(mapperThreads);
-
-	std::vector<mappedDictionary> dictArray;
+	// Create maximum thread number of reducers so the second parameter is maxThreads 
+	initializeWQStructures(mapperThreads, maxThreads);
 
 	#pragma omp parallel
 	{
@@ -42,19 +45,22 @@ int main(int argc, char* argv[])
 			{
 				#pragma omp task
 				{
-					workQueue workQ = getWQ(i);
-					dictArray.push_back(spawnNewMapperThreads(workQ));
+					workQueue workQ = getMapperWQ(i);
+					spawnNewMapperThread(workQ, maxThreads);
 				}
-			}			
+			}
+			
 		}
 
 		#pragma omp barrier
-		// How many reducer threads?
-		// Do reduce here
 
-		#pragma omp master
+		for(int i = 0; i < maxThreads; i++)
 		{
-			// TODO spwan reduce threads
+			#pragma omp task
+			{
+				workQueue workQ = getReducerWQ(i);
+				spawnNewReducerThread(workQ);
+			}
 		}
 
 	}
