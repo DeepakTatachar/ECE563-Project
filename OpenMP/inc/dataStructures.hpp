@@ -50,6 +50,6 @@ workQueue getReducerWQ(int i);
 
 void readerFinshed();
 
-int mapperRun();
+int allReadersDone();
 
 #endif

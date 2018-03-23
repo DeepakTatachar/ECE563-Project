@@ -25,8 +25,8 @@ int main(int argc, char* argv[])
 	omp_set_num_threads(4);
 
         int maxThreads = omp_get_max_threads();
-        int readerThreads = maxThreads / 2;
-	int mapperThreads = maxThreads - readerThreads;
+        int readerThreads = 2;//maxThreads / 2;
+	int mapperThreads = 2;//maxThreads - readerThreads;
 
 	// Create maximum thread number of reducers so the second parameter is maxThreads 
 	initializeWQStructures(readerThreads, mapperThreads, maxThreads);

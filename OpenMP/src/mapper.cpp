@@ -10,10 +10,11 @@ void spawnNewMapperThread(workQueue wQ, int mapperId)
 	std::vector<workItem> workChunk = dequeueMapperChunk(mapperId, CHUNK_SIZE);
 
 	// Run until all the reader threads are done
-	while(mapperRun())
+	while(!(allReadersDone() && workChunk.size() == 0))
 	{
-		for(int i = 0; i < CHUNK_SIZE; i++)
+		for(std::vector<workItem>::iterator it = workChunk.begin() ; it != workChunk.end(); ++it)
 		{
+			std::cout << mapperId << " : " << it->word << ", "  << it->count << std::endl; 
 		}
 
 		workChunk = dequeueMapperChunk(mapperId, CHUNK_SIZE);

@@ -29,7 +29,7 @@ std::string getNextSyncedFileName()
 	
 	if(fileCount < 20)
 	{
-		returnValue = fileCount + ".txt";
+		returnValue = std::to_string((long long int)fileCount) + ".txt";
 		fileCount++;
 	}
 	else
@@ -66,13 +66,12 @@ void initializeWQStructures(int readerThreads, int mapperThreads, int reducerThr
 
 void enqueueMapperChunk(int id, std::vector<workItem> wItems)
 {
-	workQueue mapperQ = globalWorkQueueList[id];
-
 	omp_set_lock(&qLocks[id]);
 
+	
 	for(std::vector<workItem>::iterator it = wItems.begin(); it != wItems.end(); ++it)
 	{
-		mapperQ.push(*it);
+		globalWorkQueueList[id].push(*it);
 	}
 
     	omp_unset_lock(&qLocks[id]);
@@ -88,22 +87,21 @@ void readerFinshed()
 	omp_unset_lock(&readerFinishLock);
 }
 
-int mapperRun()
+int allReadersDone()
 {
 	// Note reading requires no lock
 
 	if(readerThreadFinishCount == readerThreadsNum)
-		return 0;
-	else
 		return 1;
+	else
+		return 0;
 }
 
 std::vector<workItem> dequeueMapperChunk(int id, int chunkSize)
 {
-	workQueue mapperQ = globalWorkQueueList[id];
 	std::vector<workItem> workChunk;
 
-	if(mapperQ.size() == 0)
+	if(globalWorkQueueList[id].size() == 0)
 	{
 		return workChunk;
 	}
@@ -111,10 +109,10 @@ std::vector<workItem> dequeueMapperChunk(int id, int chunkSize)
 	omp_set_lock(&qLocks[id]);
 
 	int i = chunkSize;
-	while(i-- > 0 && mapperQ.size() != 0)
+	while(i-- > 0 && globalWorkQueueList[id].size() != 0)
 	{
-		workChunk.push_back(mapperQ.front());
-		mapperQ.pop();
+		workChunk.push_back(globalWorkQueueList[id].front());
+		globalWorkQueueList[id].pop();
 	}
 
 	omp_unset_lock(&qLocks[id]);
@@ -132,7 +130,7 @@ void arbitrateWorkItems(std::vector<workItem> workItems)
 	for(wQ = globalWorkQueueList.begin(); wQ != globalWorkQueueList.end(); ++wQ)
 	{
 		int tempSize = (*wQ).size();
-		if(tempSize < minQSize)
+		if(tempSize <= minQSize)
 		{
 			tempSize = minQSize;
 			minPos = i;
