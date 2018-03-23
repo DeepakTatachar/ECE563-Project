@@ -9,7 +9,7 @@ void spawnNewMapperThread(workQueue wQ, int mapperId)
 	
 	std::vector<workItem> workChunk = dequeueMapperChunk(mapperId, CHUNK_SIZE);
 
-	// Run until all the reader threads are done
+	// Run until all the reader threads are done and make sure there is no work left in the queue
 	while(!(allReadersDone() && workChunk.size() == 0))
 	{
 		for(std::vector<workItem>::iterator it = workChunk.begin() ; it != workChunk.end(); ++it)

@@ -1,10 +1,11 @@
 #include <dataStructures.hpp>
-#define NUM_LOCK 50
+#define NUM_LOCK 25
 
 workQueueList globalWorkQueueList;
 workQueueList globalReducerQueueList;
 omp_lock_t qListLock, fileCountLock;
 omp_lock_t qLocks[NUM_LOCK];
+omp_lock_t qRLocks[NUM_LOCK];
 omp_lock_t readerFinishLock;
 int fileCount = 1;
 int readerThreadFinishCount = 0;
@@ -53,6 +54,11 @@ void initializeWQStructures(int readerThreads, int mapperThreads, int reducerThr
 		omp_init_lock(&qLocks[i]);
 	}
 
+	for(int i = 0; i < NUM_LOCK; i++)
+	{
+		omp_init_lock(&qRLocks[i]);
+	}
+
 	for(int i = 0; i < mapperThreads; i++)
 	{
 		globalWorkQueueList.push_back(std::queue<workItem>());
@@ -64,10 +70,24 @@ void initializeWQStructures(int readerThreads, int mapperThreads, int reducerThr
 	}
 }
 
+void enqueueReducerChunk(int id, std::vector<workItem> wItems)
+{
+	omp_set_lock(&qRLocks[id]);
+
+	
+	for(std::vector<workItem>::iterator it = wItems.begin(); it != wItems.end(); ++it)
+	{
+		globalReducerQueueList[id].push(*it);
+	}
+
+    	omp_unset_lock(&qRLocks[id]);
+	
+}
+
 void enqueueMapperChunk(int id, std::vector<workItem> wItems)
 {
-	omp_set_lock(&qLocks[id]);
 
+	omp_set_lock(&qLocks[id]);
 	
 	for(std::vector<workItem>::iterator it = wItems.begin(); it != wItems.end(); ++it)
 	{
@@ -97,6 +117,29 @@ int allReadersDone()
 		return 0;
 }
 
+std::vector<workItem> dequeueReducerChunk(int id, int chunkSize)
+{
+	std::vector<workItem> workChunk;
+
+	if(globalReducerQueueList[id].size() == 0)
+	{
+		return workChunk;
+	}
+	
+	omp_set_lock(&qRLocks[id]);
+
+	int i = chunkSize;
+	while(i-- > 0 && globalReducerQueueList[id].size() != 0)
+	{
+		workChunk.push_back(globalReducerQueueList[id].front());
+		globalReducerQueueList[id].pop();
+	}
+
+	omp_unset_lock(&qRLocks[id]);
+
+	return workChunk;
+}
+
 std::vector<workItem> dequeueMapperChunk(int id, int chunkSize)
 {
 	std::vector<workItem> workChunk;
@@ -124,12 +167,12 @@ std::vector<workItem> dequeueMapperChunk(int id, int chunkSize)
 void arbitrateWorkItems(std::vector<workItem> workItems)
 {
 	workQueueListIterator wQ;
-	workQueue minWorkQueue = globalWorkQueueList[0];
 	int minQSize = -1, minPos = 0, i = 0;
 	
 	for(wQ = globalWorkQueueList.begin(); wQ != globalWorkQueueList.end(); ++wQ)
 	{
 		int tempSize = (*wQ).size();
+
 		if(tempSize <= minQSize)
 		{
 			tempSize = minQSize;
