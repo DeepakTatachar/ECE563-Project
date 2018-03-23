@@ -5,7 +5,10 @@ workQueueList globalWorkQueueList;
 workQueueList globalReducerQueueList;
 omp_lock_t qListLock, fileCountLock;
 omp_lock_t qLocks[NUM_LOCK];
+omp_lock_t readerFinishLock;
 int fileCount = 1;
+int readerThreadFinishCount = 0;
+int readerThreadsNum;
 
 workQueue getMapperWQ(int i)
 {
@@ -38,10 +41,12 @@ std::string getNextSyncedFileName()
 	return returnValue;
 }
 
-void initializeWQStructures(int mapperThreads, int reducerThreads)
+void initializeWQStructures(int readerThreads, int mapperThreads, int reducerThreads)
 {
+	readerThreadsNum = readerThreads;
 	omp_init_lock(&qListLock);
 	omp_init_lock(&fileCountLock);
+	omp_init_lock(&readerFinishLock);
 
 	for(int i = 0; i < NUM_LOCK; i++)
 	{
@@ -74,14 +79,39 @@ void enqueueMapperChunk(int id, std::vector<workItem> wItems)
 	
 }
 
+void readerFinshed()
+{
+	omp_set_lock(&readerFinishLock);
+
+	readerThreadFinishCount++;
+	
+	omp_unset_lock(&readerFinishLock);
+}
+
+int mapperRun()
+{
+	// Note reading requires no lock
+
+	if(readerThreadFinishCount == readerThreadsNum)
+		return 0;
+	else
+		return 1;
+}
+
 std::vector<workItem> dequeueMapperChunk(int id, int chunkSize)
 {
 	workQueue mapperQ = globalWorkQueueList[id];
 	std::vector<workItem> workChunk;
+
+	if(mapperQ.size() == 0)
+	{
+		return workChunk;
+	}
 	
 	omp_set_lock(&qLocks[id]);
 
-	for(int i = chunkSize; i > 0; i--)
+	int i = chunkSize;
+	while(i-- > 0 && mapperQ.size() != 0)
 	{
 		workChunk.push_back(mapperQ.front());
 		mapperQ.pop();

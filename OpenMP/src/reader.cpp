@@ -56,6 +56,8 @@ void spawnNewReaderThread()
 		// Get the next file to read
 		fileName = getNextSyncedFileName();
 	}
+
+	readerFinshed();
 	
 }
 

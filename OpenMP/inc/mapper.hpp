@@ -3,6 +3,6 @@
 
 #include <dataStructures.hpp>
 
-void spawnNewMapperThread(workQueue wQ, int numReducerThreads);
+void spawnNewMapperThread(workQueue wQ, int mapperId);
 
 #endif

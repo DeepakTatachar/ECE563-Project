@@ -29,7 +29,7 @@ int main(int argc, char* argv[])
 	int mapperThreads = maxThreads - readerThreads;
 
 	// Create maximum thread number of reducers so the second parameter is maxThreads 
-	initializeWQStructures(mapperThreads, maxThreads);
+	initializeWQStructures(readerThreads, mapperThreads, maxThreads);
 
 	#pragma omp parallel
 	{
@@ -46,7 +46,7 @@ int main(int argc, char* argv[])
 				#pragma omp task
 				{
 					workQueue workQ = getMapperWQ(i);
-					spawnNewMapperThread(workQ, maxThreads);
+					spawnNewMapperThread(workQ, i);
 				}
 			}
 			

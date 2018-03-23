@@ -8,6 +8,7 @@
 #include <cstdlib>
 #include <iostream>
 #include <omp.h>
+#define CHUNK_SIZE 10
 
 typedef struct wItem
 {
@@ -41,10 +42,14 @@ void arbitrateWorkItems(std::vector<workItem> workItems);
 
 std::string getNextSyncedFileName();
 
-void initializeWQStructures(int mapperThreads, int reducerThreads);
+void initializeWQStructures(int readerThreads, int mapperThreads, int reducerThreads);
 
 workQueue getMapperWQ(int i);
 
 workQueue getReducerWQ(int i);
+
+void readerFinshed();
+
+int mapperRun();
 
 #endif
