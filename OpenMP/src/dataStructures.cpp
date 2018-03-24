@@ -3,18 +3,16 @@
 
 workQueueList globalWorkQueueList;
 workQueueList globalReducerQueueList;
+
 omp_lock_t qListLock, fileCountLock;
 omp_lock_t qLocks[NUM_LOCK];
 omp_lock_t qRLocks[NUM_LOCK];
 omp_lock_t readerFinishLock;
 omp_lock_t mapperFinishLock;
 omp_lock_t arbitrateLock;
-int fileCount = 1;
-int readerThreadFinishCount = 0;
-int readerThreadsNum;
-int currentMapperThreadQ = 0;
-int mapperThreadFinishCount = 0;
-int mapperThreadNum;
+
+int readerThreadCount, mapperThreadCount, reducerThreadCount;
+int fileCount = 1, currentMapperThreadQ = 0, mapperThreadFinishCount = 0, readerThreadFinishCount = 0;
 
 workQueue getMapperWQ(int i)
 {
@@ -49,8 +47,9 @@ std::string getNextSyncedFileName()
 
 void initializeWQStructures(int readerThreads, int mapperThreads, int reducerThreads)
 {
-	readerThreadsNum = readerThreads;
-	mapperThreadNum = mapperThreads;
+	readerThreadCount = readerThreads;
+	mapperThreadCount = mapperThreads;
+	reducerThreadCount = reducerThreads;
 
 	omp_init_lock(&qListLock);
 	omp_init_lock(&fileCountLock);
@@ -79,11 +78,12 @@ void initializeWQStructures(int readerThreads, int mapperThreads, int reducerThr
 	}
 }
 
-void enqueueReducerChunk(int id, std::vector<workItem> wItems)
+void enqueueReducerChunk(int hashValue, std::vector<workItem> wItems)
 {
+	int id = hashValue % reducerThreadCount;
+
 	omp_set_lock(&qRLocks[id]);
 
-	
 	for(std::vector<workItem>::iterator it = wItems.begin(); it != wItems.end(); ++it)
 	{
 		globalReducerQueueList[id].push(*it);
@@ -130,7 +130,7 @@ int allReadersDone()
 {
 	// Note reading requires no lock
 
-	if(readerThreadFinishCount == readerThreadsNum)
+	if(readerThreadFinishCount == readerThreadCount)
 		return 1;
 	else
 		return 0;
@@ -140,7 +140,7 @@ int allMappersDone()
 {
 	// Note reading requires no lock
 
-	if(mapperThreadFinishCount == mapperThreadNum)
+	if(mapperThreadFinishCount == mapperThreadCount)
 		return 1;
 	else
 		return 0;
@@ -198,7 +198,7 @@ void arbitrateWorkItems(std::vector<workItem> workItems)
 	int pos;
 	omp_set_lock(&arbitrateLock);
 	
-	pos = currentMapperThreadQ++ % mapperThreadNum;
+	pos = currentMapperThreadQ++ % mapperThreadCount;
 
 	omp_unset_lock(&arbitrateLock);
 

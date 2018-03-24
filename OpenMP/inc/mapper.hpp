@@ -2,7 +2,7 @@
 #define   Mapper_H
 
 #include <dataStructures.hpp>
-#include <iostream>
+#include <functional>
 
 void spawnNewMapperThread(workQueue wQ, int mapperId);
 
