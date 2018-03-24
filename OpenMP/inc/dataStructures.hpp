@@ -8,11 +8,19 @@
 #include <cstdlib>
 #include <iostream>
 #include <omp.h>
+#define CHUNK_SIZE 10
 
 typedef struct wItem
 {
 	std::string word;
 	int count;
+
+	wItem(std::string wrd, int cnt)
+	{
+		word = wrd;
+		count = cnt;
+	}
+
 } workItem;
 
 typedef std::queue<workItem> workQueue;
@@ -31,9 +39,9 @@ typedef std::map<std::string, int> mappedDictionary;
 // Writing chinks of work items and reading chunks of workItems will reduce the bottleneck
 void enqueueMapperChunk(int id, std::vector<workItem> wItems);
 
-std::vector<workItem> dequeueMapperChunk(int id, int chunkSize);
-
 void enqueueReducerChunk(int id, std::vector<workItem> wItems);
+
+std::vector<workItem> dequeueMapperChunk(int id, int chunkSize);
 
 std::vector<workItem> dequeueReducerChunk(int id, int chunkSize);
 
@@ -41,10 +49,14 @@ void arbitrateWorkItems(std::vector<workItem> workItems);
 
 std::string getNextSyncedFileName();
 
-void initializeWQStructures(int mapperThreads, int reducerThreads);
+void initializeWQStructures(int readerThreads, int mapperThreads, int reducerThreads);
 
 workQueue getMapperWQ(int i);
 
 workQueue getReducerWQ(int i);
+
+void readerFinshed();
+
+int allReadersDone();
 
 #endif

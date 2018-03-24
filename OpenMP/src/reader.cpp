@@ -14,8 +14,7 @@ std::vector<workItem> createWorkItems(std::string line)
 		// Check if the string is not all whitespaces
 		if(subs.find_first_not_of(' ') != std::string::npos)
 		{
-			workItem newWorkItem = {subs, 1};
-			lineWorkItems.push_back(newWorkItem);
+			lineWorkItems.push_back(workItem(subs, 1));
 		}
 
 	} while (iss);
@@ -56,6 +55,8 @@ void spawnNewReaderThread()
 		// Get the next file to read
 		fileName = getNextSyncedFileName();
 	}
+
+	readerFinshed();
 	
 }
 
