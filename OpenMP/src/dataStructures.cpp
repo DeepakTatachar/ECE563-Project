@@ -7,9 +7,12 @@ omp_lock_t qListLock, fileCountLock;
 omp_lock_t qLocks[NUM_LOCK];
 omp_lock_t qRLocks[NUM_LOCK];
 omp_lock_t readerFinishLock;
+omp_lock_t arbitrateLock;
 int fileCount = 1;
 int readerThreadFinishCount = 0;
 int readerThreadsNum;
+int currentMapperThreadQ = 0;
+int mapperThreadNum;
 
 workQueue getMapperWQ(int i)
 {
@@ -45,9 +48,12 @@ std::string getNextSyncedFileName()
 void initializeWQStructures(int readerThreads, int mapperThreads, int reducerThreads)
 {
 	readerThreadsNum = readerThreads;
+	mapperThreadNum = mapperThreads;
+
 	omp_init_lock(&qListLock);
 	omp_init_lock(&fileCountLock);
 	omp_init_lock(&readerFinishLock);
+	omp_init_lock(&arbitrateLock);
 
 	for(int i = 0; i < NUM_LOCK; i++)
 	{
@@ -166,26 +172,13 @@ std::vector<workItem> dequeueMapperChunk(int id, int chunkSize)
 // Decides which mapper gets which workitem
 void arbitrateWorkItems(std::vector<workItem> workItems)
 {
-	workQueueListIterator wQ;
-	int minQSize = -1, minPos = 0, i = 0;
+	int pos;
+	omp_set_lock(&arbitrateLock);
 	
-	for(wQ = globalWorkQueueList.begin(); wQ != globalWorkQueueList.end(); ++wQ)
-	{
-		int tempSize = (*wQ).size();
+	pos = currentMapperThreadQ++ % mapperThreadNum;
 
-		if(tempSize <= minQSize)
-		{
-			tempSize = minQSize;
-			minPos = i;
-		}
-
-		i++;	
-	}
+	omp_unset_lock(&arbitrateLock);
 
 	// Lock here, mapperChunk synchronizes correctly
-	enqueueMapperChunk(minPos, workItems);	
-		
-	// TODO 
-	// Implement a round robin work distribution scheme to pump work items into work queues
-	// Note current architecture has an arbiter for each reader task/thread.
+	enqueueMapperChunk(pos, workItems);	
 }
