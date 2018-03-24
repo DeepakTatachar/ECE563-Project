@@ -7,11 +7,13 @@ omp_lock_t qListLock, fileCountLock;
 omp_lock_t qLocks[NUM_LOCK];
 omp_lock_t qRLocks[NUM_LOCK];
 omp_lock_t readerFinishLock;
+omp_lock_t mapperFinishLock;
 omp_lock_t arbitrateLock;
 int fileCount = 1;
 int readerThreadFinishCount = 0;
 int readerThreadsNum;
 int currentMapperThreadQ = 0;
+int mapperThreadFinishCount = 0;
 int mapperThreadNum;
 
 workQueue getMapperWQ(int i)
@@ -54,6 +56,7 @@ void initializeWQStructures(int readerThreads, int mapperThreads, int reducerThr
 	omp_init_lock(&fileCountLock);
 	omp_init_lock(&readerFinishLock);
 	omp_init_lock(&arbitrateLock);
+	omp_init_lock(&mapperFinishLock);
 
 	for(int i = 0; i < NUM_LOCK; i++)
 	{
@@ -113,11 +116,31 @@ void readerFinshed()
 	omp_unset_lock(&readerFinishLock);
 }
 
+
+void mapperFinshed()
+{
+	omp_set_lock(&readerFinishLock);
+
+	mapperThreadFinishCount++;
+	
+	omp_unset_lock(&readerFinishLock);
+}
+
 int allReadersDone()
 {
 	// Note reading requires no lock
 
 	if(readerThreadFinishCount == readerThreadsNum)
+		return 1;
+	else
+		return 0;
+}
+
+int allMappersDone()
+{
+	// Note reading requires no lock
+
+	if(mapperThreadFinishCount == mapperThreadNum)
 		return 1;
 	else
 		return 0;
