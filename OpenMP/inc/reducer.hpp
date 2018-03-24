@@ -3,6 +3,6 @@
 
 #include <dataStructures.hpp>
 
-void spawnNewReducerThread(workQueue reducerQ);
+void spawnNewReducerThread(int id, workQueue reducerQ);
 
 #endif

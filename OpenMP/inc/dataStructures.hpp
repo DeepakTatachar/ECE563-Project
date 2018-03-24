@@ -59,4 +59,8 @@ void readerFinshed();
 
 int allReadersDone();
 
+void mapperFinshed();
+
+int allMappersDone();
+
 #endif

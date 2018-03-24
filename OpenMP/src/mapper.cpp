@@ -5,7 +5,7 @@ void spawnNewMapperThread(workQueue wQ, int mapperId)
 
 	// Dequeue workItem from the workQ 
 	// Combine the words and map to the correct reducer
-	// To combine the words we hash the input string to find the correct location to update
+	// To map the word to the right reducer we hash the input string to find the correct reducer
 	
 	std::vector<workItem> workChunk = dequeueMapperChunk(mapperId, CHUNK_SIZE);
 
@@ -20,5 +20,7 @@ void spawnNewMapperThread(workQueue wQ, int mapperId)
 		workChunk = dequeueMapperChunk(mapperId, CHUNK_SIZE);
 	}
 	
+	mapperFinshed();
+
 	return;
 }

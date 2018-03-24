@@ -59,7 +59,7 @@ int main(int argc, char* argv[])
 			#pragma omp task
 			{
 				workQueue workQ = getReducerWQ(i);
-				spawnNewReducerThread(workQ);
+				spawnNewReducerThread(i, workQ);
 			}
 		}
 
