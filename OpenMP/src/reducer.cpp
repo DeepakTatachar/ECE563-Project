@@ -2,6 +2,8 @@
 
 void spawnNewReducerThread(int reducerId, workQueue reducerWQ)
 {
+	std::map<std::string, int> wordCount;
+
 	// Dequeue workItem from the workQ 
 	
 	std::vector<workItem> workChunk = dequeueReducerChunk(reducerId, CHUNK_SIZE);
@@ -11,10 +13,15 @@ void spawnNewReducerThread(int reducerId, workQueue reducerWQ)
 	{
 		for(std::vector<workItem>::iterator it = workChunk.begin() ; it != workChunk.end(); ++it)
 		{
-			std::cout << reducerId << " : " << it->word << ", "  << it->count << std::endl; 
+			wordCount[it->word] += it->count;
 		}
 
 		workChunk = dequeueReducerChunk(reducerId, CHUNK_SIZE);
+	}
+
+	for (std::map<std::string, int>::iterator it = wordCount.begin(); it != wordCount.end(); ++it)
+	{
+		std::cout << it->first << ", " << it->second << std::endl;
 	}
 	
 	return;

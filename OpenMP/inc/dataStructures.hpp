@@ -39,7 +39,7 @@ typedef std::map<std::string, int> mappedDictionary;
 // Writing chinks of work items and reading chunks of workItems will reduce the bottleneck
 void enqueueMapperChunk(int id, std::vector<workItem> wItems);
 
-void enqueueReducerChunk(int id, std::vector<workItem> wItems);
+void enqueueReducerChunk(int hashValue, std::vector<workItem> wItems);
 
 std::vector<workItem> dequeueMapperChunk(int id, int chunkSize);
 
