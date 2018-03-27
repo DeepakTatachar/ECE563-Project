@@ -28,7 +28,7 @@ def cleanAndWriteFile(inputFile, outputFile):
 
 			# Remove tabs, new lines extra white spaces
 			clean = re.sub( '\s+', ' ', alphaNumeric)
-			cleanLines = cleanLines + clean
+			cleanLines = cleanLines + '\n' + clean
 
 	finalString = re.sub(' +',' ', cleanLines)
 	outFileHandle = open(outputFile, 'w')
