@@ -17,6 +17,10 @@
 #include <reducer.hpp>
 #endif
 
+#ifndef Writer_H
+#include <writer.hpp>
+#endif
+
 int main(int argc, char* argv[])
 {
 	workQueueListIterator wQ;
@@ -71,15 +75,8 @@ int main(int argc, char* argv[])
 
 	}
 
-	std::vector<countTable> wordCountTable = getCountList();
-	for(std::vector<countTable>::iterator it = wordCountTable.begin(); it != wordCountTable.end(); ++it)
-	{
-		countTable table = *it;
-		for(countTable::const_iterator itr = table.begin(); itr != table.end(); ++itr)
-		{
-			std::cout << itr->first << " : " << itr->second << std::endl;
-		}
-	}
+	// Write the results to the file
+	writeFile("Output.txt");
 
 	return 0;
 }
