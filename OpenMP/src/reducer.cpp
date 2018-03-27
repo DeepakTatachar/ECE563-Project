@@ -2,7 +2,7 @@
 
 void spawnNewReducerThread(int reducerId, workQueue reducerWQ)
 {
-	std::map<std::string, int> wordCount;
+	countTable wordCount;
 
 	// Dequeue workItem from the workQ 
 	
@@ -19,10 +19,6 @@ void spawnNewReducerThread(int reducerId, workQueue reducerWQ)
 		workChunk = dequeueReducerChunk(reducerId, CHUNK_SIZE);
 	}
 
-	for (std::map<std::string, int>::iterator it = wordCount.begin(); it != wordCount.end(); ++it)
-	{
-		std::cout << it->first << ", " << it->second << std::endl;
-	}
-	
-	return;
+
+	enqueueCountTable(wordCount);
 }

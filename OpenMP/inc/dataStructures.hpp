@@ -66,6 +66,10 @@ int allReadersDone();
 
 void mapperFinshed();
 
+std::vector<countTable> getCountList();
+
+void enqueueCountTable(countTable table);
+
 int allMappersDone();
 
 #endif

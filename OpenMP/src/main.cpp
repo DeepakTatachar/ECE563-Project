@@ -65,8 +65,20 @@ int main(int argc, char* argv[])
 				  	spawnNewReducerThread(i, workQ);
 				}
 			}
+
+			#pragma omp taskwait
 		}
 
+	}
+
+	std::vector<countTable> wordCountTable = getCountList();
+	for(std::vector<countTable>::iterator it = wordCountTable.begin(); it != wordCountTable.end(); ++it)
+	{
+		countTable table = *it;
+		for(countTable::const_iterator itr = table.begin(); itr != table.end(); ++itr)
+		{
+			std::cout << itr->first << " : " << itr->second << std::endl;
+		}
 	}
 
 	return 0;

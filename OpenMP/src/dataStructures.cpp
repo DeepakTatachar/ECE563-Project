@@ -3,6 +3,7 @@
 
 workQueueList globalWorkQueueList;
 workQueueList globalReducerQueueList;
+std::vector<countTable> countTableList;
 
 omp_lock_t qListLock, fileCountLock;
 omp_lock_t qLocks[NUM_LOCK];
@@ -10,6 +11,7 @@ omp_lock_t qRLocks[NUM_LOCK];
 omp_lock_t readerFinishLock;
 omp_lock_t mapperFinishLock;
 omp_lock_t arbitrateLock;
+omp_lock_t countTableLock;
 
 int readerThreadCount, mapperThreadCount, reducerThreadCount;
 int fileCount = 1, currentMapperThreadQ = 0, mapperThreadFinishCount = 0, readerThreadFinishCount = 0;
@@ -56,6 +58,7 @@ void initializeWQStructures(int readerThreads, int mapperThreads, int reducerThr
 	omp_init_lock(&readerFinishLock);
 	omp_init_lock(&arbitrateLock);
 	omp_init_lock(&mapperFinishLock);
+	omp_init_lock(&countTableLock);
 
 	for(int i = 0; i < NUM_LOCK; i++)
 	{
@@ -190,6 +193,20 @@ std::vector<workItem> dequeueMapperChunk(int id, int chunkSize)
 	omp_unset_lock(&qLocks[id]);
 
 	return workChunk;
+}
+
+void enqueueCountTable(countTable table)
+{
+	omp_set_lock(&countTableLock);
+
+	countTableList.push_back(table);
+
+	omp_unset_lock(&countTableLock);
+}
+
+std::vector<countTable> getCountList()
+{
+	return countTableList;
 }
 
 // Decides which mapper gets which workitem
