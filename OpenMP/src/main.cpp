@@ -25,11 +25,12 @@ int main(int argc, char* argv[])
 	omp_set_num_threads(4);
 
         int maxThreads = omp_get_max_threads();
-        int readerThreads = 2;//maxThreads / 2;
-	int mapperThreads = 2;//maxThreads - readerThreads;
+        int readerThreads = 2;
+	int mapperThreads = 2;
+	int reducerThreads = maxThreads; 
 
 	// Create maximum thread number of reducers so the second parameter is maxThreads 
-	initializeWQStructures(readerThreads, mapperThreads, maxThreads);
+	initializeWQStructures(readerThreads, mapperThreads, reducerThreads);
 
 	#pragma omp parallel
 	{
@@ -46,26 +47,27 @@ int main(int argc, char* argv[])
 				#pragma omp task
 				{
 					workQueue workQ = getMapperWQ(i);
-					spawnNewMapperThread(workQ, i);
+					spawnNewMapperThread(workQ, i, reducerThreads);
 				}
 			}
 			
 		}
 
 		#pragma omp barrier
-		/*
-		for(int i = 0; i < maxThreads; i++)
+
+		#pragma omp master
 		{
-			#pragma omp task
+			for(int i = 0; i < reducerThreads; i++)
 			{
-			        std::cout << "max threads: "<<maxThreads << std::endl;
-			  	workQueue workQ = getReducerWQ(i);
-			  	spawnNewReducerThread(i, workQ);
+				#pragma omp task
+				{
+				  	workQueue workQ = getReducerWQ(i);
+				  	spawnNewReducerThread(i, workQ);
+				}
 			}
 		}
-		*/
+
 	}
 
-	printf("Hello World!\n");
 	return 0;
 }
