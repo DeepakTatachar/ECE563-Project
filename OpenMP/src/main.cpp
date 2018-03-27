@@ -76,7 +76,7 @@ int main(int argc, char* argv[])
 	}
 
 	// Write the results to the file
-	writeFile("Output.txt");
+	writeFile("OutputFile.txt");
 
 	return 0;
 }
