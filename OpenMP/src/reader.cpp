@@ -41,15 +41,20 @@ void spawnNewReaderThread()
 		std::ifstream inputReadFile;
 
 		inputReadFile.open(fileName);
-		if (inputReadFile.is_open())
+		//inputReadFile.open("1.txt");
+		if(inputReadFile.is_open())
 		{
 			while (getline(inputReadFile, line))
 			{
-				// createWorkItems breaks the string into word and creates workItems
+			  // createWorkItems breaks the string into word and creates workItems
+			        std::cout <<"text line is"<< line << std::endl;
 				arbitrateWorkItems(createWorkItems(line));
 			}
 		}
 
+		else
+		  std::cout << "file not found! \n";
+		
 		inputReadFile.close();
 
 		// Get the next file to read

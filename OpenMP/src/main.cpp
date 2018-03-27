@@ -53,16 +53,17 @@ int main(int argc, char* argv[])
 		}
 
 		#pragma omp barrier
-
+		/*
 		for(int i = 0; i < maxThreads; i++)
 		{
 			#pragma omp task
 			{
-				workQueue workQ = getReducerWQ(i);
-				spawnNewReducerThread(i, workQ);
+			        std::cout << "max threads: "<<maxThreads << std::endl;
+			  	workQueue workQ = getReducerWQ(i);
+			  	spawnNewReducerThread(i, workQ);
 			}
 		}
-
+		*/
 	}
 
 	printf("Hello World!\n");

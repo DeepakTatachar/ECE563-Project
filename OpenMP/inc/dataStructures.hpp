@@ -5,6 +5,7 @@
 #include <string>
 #include <queue>
 #include <map>
+#include <vector>
 #include <cstdlib>
 #include <iostream>
 #include <omp.h>
@@ -62,5 +63,7 @@ int allReadersDone();
 void mapperFinshed();
 
 int allMappersDone();
+
+void print_queue(std::queue<workItem> temp);
 
 #endif

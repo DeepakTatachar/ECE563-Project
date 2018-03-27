@@ -31,9 +31,10 @@ std::string getNextSyncedFileName()
 	std::string returnValue;
 	omp_set_lock(&fileCountLock);
 	
-	if(fileCount < 20)
+	if(fileCount <= 2)
 	{
 		returnValue = std::to_string((long long int)fileCount) + ".txt";
+		std::cout << returnValue << std::endl;
 		fileCount++;
 	}
 	else
@@ -204,4 +205,14 @@ void arbitrateWorkItems(std::vector<workItem> workItems)
 
 	// Lock here, mapperChunk synchronizes correctly
 	enqueueMapperChunk(pos, workItems);	
+}
+
+void print_queue(std::queue<workItem> q)
+{
+  while (!q.empty())
+  {
+    std::cout << q.front().word << " " << q.front().count;
+    q.pop();
+  }
+  std::cout << std::endl;
 }
