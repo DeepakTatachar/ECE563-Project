@@ -17,6 +17,59 @@ omp_lock_t countTableLock;
 int readerThreadCount, mapperThreadCount, reducerThreadCount;
 int fileCount = 1, currentMapperThreadQ = 0, mapperThreadFinishCount = 0, readerThreadFinishCount = 0;
 
+int numProcessesDone(int* arr, int size)
+{
+	int sum = 0;
+	for(int i = 0; i < size; i++)
+	{
+		sum += *arr;
+	}
+
+	return sum;
+}
+
+void CreateFileSyncThread(int numP)
+{
+	int* buf = (int*)calloc(sizeof(int), numP);
+	MPI_Request* request = (MPI_Request*) malloc(sizeof(MPI_Request) * numP);
+	MPI_Status fileNumStatus;
+	int valueToSend = -1;
+
+	int reqNum = -1;
+
+	for(int i = 0; i < numP; i++)
+	{
+		MPI_Irecv(buf + i, 1, MPI_INT, i, ALL_FILES_READ_TAG, MPI_COMM_WORLD, request + i);
+	}
+
+	while(numProcessesDone(buf, numP) != numP)
+	{
+		MPI_Recv(&reqNum, 1, MPI_INT, MPI_ANY_SOURCE, GET_FILE_NUM_TAG, MPI_COMM_WORLD, &fileNumStatus);
+	
+		omp_set_lock(&fileCountLock);
+
+		if(fileCount <= 20)
+		{
+			valueToSend = fileCount;
+			fileCount++;
+		}
+		else
+		{
+			valueToSend = -1;
+		}
+
+		omp_unset_lock(&fileCountLock);
+
+
+		MPI_Send(&valueToSend, 1, MPI_INT, reqNum, GET_FILE_NUM_TAG, MPI_COMM_WORLD);
+
+	}
+	
+	std::cout << "All Processess are done asking for new files" << std::endl;
+	free(buf);
+	free(request);
+}
+
 workQueue getMapperWQ(int i)
 {
 	std::cout << "Do not call GetMapperWQ method unless you know what you are doing" << std::endl;
@@ -32,19 +85,22 @@ workQueue getReducerWQ(int i)
 std::string getNextSyncedFileName()
 {
 	std::string returnValue;
-	omp_set_lock(&fileCountLock);
-	
-	if(fileCount <= 20)
+	int fileNum;
+	MPI_Status fileNumStatus;
+
+	MPI_Send(&rank, 1, MPI_INT, 0, GET_FILE_NUM_TAG, MPI_COMM_WORLD);
+	MPI_Recv(&fileNum, 1, MPI_INT, 0, GET_FILE_NUM_TAG, MPI_COMM_WORLD, &fileNumStatus);
+
+	if(fileNum != -1)
 	{
-		returnValue = std::to_string((long long int)fileCount) + ".txt";
-		fileCount++;
+		returnValue = std::to_string((long long int)fileNum) + ".txt";
 	}
 	else
 	{
 		returnValue = "";
 	}
 
-	omp_unset_lock(&fileCountLock);
+
 	return returnValue;
 }
 
@@ -114,11 +170,21 @@ void enqueueMapperChunk(int id, std::vector<workItem> wItems)
 
 void readerFinshed()
 {
+	MPI_Status fileNumStatus;
+	int fileNum;
+
 	omp_set_lock(&readerFinishLock);
 
 	readerThreadFinishCount++;
 	
 	omp_unset_lock(&readerFinishLock);
+
+	int done = 1;
+	MPI_Send(&done, 1, MPI_INT, 0, ALL_FILES_READ_TAG, MPI_COMM_WORLD);
+
+	// Perform a read request to break the main rank file distro thread while loop
+	MPI_Send(&rank, 1, MPI_INT, 0, GET_FILE_NUM_TAG, MPI_COMM_WORLD);
+	MPI_Recv(&fileNum, 1, MPI_INT, 0, GET_FILE_NUM_TAG, MPI_COMM_WORLD, &fileNumStatus);
 }
 
 
@@ -137,6 +203,7 @@ int allReadersDone()
 
 	if(readerThreadFinishCount == readerThreadCount)
 		return 1;
+
 	else
 		return 0;
 }

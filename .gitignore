@@ -28,3 +28,7 @@
 
 #Output files
 /OpenMP/bin/
+/MPI/bin/
+
+/OpenMP/OutputFile.txt
+/MPI/OutputFile.txt

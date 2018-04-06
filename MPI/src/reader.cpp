@@ -26,7 +26,10 @@ void spawnNewReaderThread()
 {
 
 	std::string fileName = getNextSyncedFileName();
+	int rank;
 
+	MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+	std::cout << "Reading thread starting in " << rank << std::endl;
 	while(fileName.compare(""))
 	{
 		// 1. Readfile until eof.

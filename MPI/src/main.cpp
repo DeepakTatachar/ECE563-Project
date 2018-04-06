@@ -29,7 +29,7 @@ int main(int argc, char* argv[])
 	workQueueListIterator wQ;
 
 	// TODO Set number of threads from command line argument
-	omp_set_num_threads(4);
+	omp_set_num_threads(8);
 
         int maxThreads = omp_get_max_threads();
         int readerThreads = 2;
@@ -40,13 +40,29 @@ int main(int argc, char* argv[])
 	MPI_Comm_size(MPI_COMM_WORLD, &numP);
 	MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 
+
+	MPI_Barrier(MPI_COMM_WORLD);
+
 	// Create maximum thread number of reducers so the second parameter is maxThreads 
 	initializeWQStructures(rank, readerThreads, mapperThreads, reducerThreads);
+
+	if(rank == 0)
+	{	
+		#pragma omp parallel
+		{
+			#pragma omp single
+			{
+				#pragma omp task			
+				CreateFileSyncThread(numP);
+			}
+		}
+	}
 
 	#pragma omp parallel
 	{
 		#pragma omp master
-		{	
+		{
+
 			for(int i = 0; i < readerThreads; i++)
 			{
 				#pragma omp task

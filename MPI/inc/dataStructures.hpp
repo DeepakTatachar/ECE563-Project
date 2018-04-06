@@ -9,7 +9,10 @@
 #include <cstdlib>
 #include <iostream>
 #include <omp.h>
+#include <mpi.h>
 #define CHUNK_SIZE 10
+#define ALL_FILES_READ_TAG 10
+#define GET_FILE_NUM_TAG 11
 
 typedef struct wItem
 {
@@ -38,6 +41,8 @@ typedef std::map<std::string, int> countTable;
 // This is what is accessed by the reduce threads to reduce accrosss all the mapped items
 
 typedef std::map<std::string, int> mappedDictionary;
+
+void CreateFileSyncThread(int numP);
 
 // Since both the reader and mapper are accessing the workqueue.
 // This is will be a region for contention/bottleneck
