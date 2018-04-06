@@ -46,39 +46,39 @@ int main(int argc, char* argv[])
 	// Create maximum thread number of reducers so the second parameter is maxThreads 
 	initializeWQStructures(rank, readerThreads, mapperThreads, reducerThreads);
 
-	if(rank == 0)
-	{	
-		#pragma omp parallel
-		{
-			#pragma omp single
-			{
-				#pragma omp task			
-				CreateFileSyncThread(numP);
-			}
-		}
-	}
-
 	#pragma omp parallel
 	{
-		#pragma omp master
+		#pragma omp sections
 		{
-
-			for(int i = 0; i < readerThreads; i++)
+			#pragma omp section
 			{
-				#pragma omp task
-				spawnNewReaderThread();				
-			}
-
-			for(int i = 0; i < mapperThreads; i++)
-			{
-				#pragma omp task
+				if(rank == 0)
 				{
-					workQueue workQ = getMapperWQ(i);
-					spawnNewMapperThread(workQ, i, reducerThreads);
+					#pragma omp task if(0)			
+					CreateFileSyncThread(numP);
 				}
 			}
+
+			#pragma omp section
+			{
+				for(int i = 0; i < readerThreads; i++)
+				{
+					#pragma omp task
+					spawnNewReaderThread();				
+				}
+
+				for(int i = 0; i < mapperThreads; i++)
+				{
+					#pragma omp task
+					{
+						workQueue workQ = getMapperWQ(i);
+						spawnNewMapperThread(workQ, i, reducerThreads);
+					}
+				}
 			
+			}
 		}
+
 
 		#pragma omp barrier
 
