@@ -44,39 +44,29 @@ int main(int argc, char* argv[])
 	MPI_Barrier(MPI_COMM_WORLD);
 
 	// Create maximum thread number of reducers so the second parameter is maxThreads 
-	initializeWQStructures(rank, readerThreads, mapperThreads, reducerThreads);
+	initializeWQStructures(rank, numP, readerThreads, mapperThreads, reducerThreads);
+
+	std::cout << " Rank process starting " << rank << std::endl;
 
 	#pragma omp parallel
 	{
-		#pragma omp sections
+		#pragma omp master
 		{
-			#pragma omp section
+			for(int i = 0; i < readerThreads; i++)
 			{
-				if(rank == 0)
-				{
-					#pragma omp task if(0)			
-					CreateFileSyncThread(numP);
-				}
+				#pragma omp task
+				spawnNewReaderThread();				
 			}
 
-			#pragma omp section
+			for(int i = 0; i < mapperThreads; i++)
 			{
-				for(int i = 0; i < readerThreads; i++)
+				#pragma omp task
 				{
-					#pragma omp task
-					spawnNewReaderThread();				
+					workQueue workQ = getMapperWQ(i);
+					spawnNewMapperThread(workQ, i, reducerThreads);
 				}
-
-				for(int i = 0; i < mapperThreads; i++)
-				{
-					#pragma omp task
-					{
-						workQueue workQ = getMapperWQ(i);
-						spawnNewMapperThread(workQ, i, reducerThreads);
-					}
-				}
-			
 			}
+		
 		}
 
 

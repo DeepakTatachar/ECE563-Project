@@ -42,8 +42,6 @@ typedef std::map<std::string, int> countTable;
 
 typedef std::map<std::string, int> mappedDictionary;
 
-void CreateFileSyncThread(int numP);
-
 // Since both the reader and mapper are accessing the workqueue.
 // This is will be a region for contention/bottleneck
 // Writing chinks of work items and reading chunks of workItems will reduce the bottleneck
@@ -59,7 +57,7 @@ void arbitrateWorkItems(std::vector<workItem> workItems);
 
 std::string getNextSyncedFileName();
 
-void initializeWQStructures(int rnk, int readerThreads, int mapperThreads, int reducerThreads);
+void initializeWQStructures(int rnk, int numProc,int readerThreads, int mapperThreads, int reducerThreads);
 
 workQueue getMapperWQ(int i);
 
