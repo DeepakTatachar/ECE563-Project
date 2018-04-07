@@ -13,6 +13,9 @@
 #define CHUNK_SIZE 10
 #define ALL_FILES_READ_TAG 10
 #define GET_FILE_NUM_TAG 11
+#define MAX_STR_SIZE 100
+#define SND_WORK_TAG 45
+#define SND_WORK_SIZE 44
 
 typedef struct wItem
 {
@@ -26,6 +29,37 @@ typedef struct wItem
 	}
 
 } workItem;
+
+
+typedef struct reducerWItem
+{
+	char word[MAX_STR_SIZE];
+	int count;
+
+	reducerWItem(std::string wrd, int cnt)
+	{
+		int i;
+		int maxLength = MAX_STR_SIZE;
+
+		if(wrd.length() < maxLength)
+		{
+			maxLength = wrd.length();
+		}
+
+		for(i = 0; i < maxLength; i++)
+		{
+			word[i] = wrd[i];
+		}
+
+		for(; i < MAX_STR_SIZE - 1; i++)
+		{
+			word[i] = ' ';
+		}
+
+		word[i] = '\0';
+		count = cnt;
+	}
+} reducerWorkItem;
 
 typedef std::queue<workItem> workQueue;
 
@@ -49,7 +83,9 @@ typedef std::map<std::string, int> mappedDictionary;
 // Writing chinks of work items and reading chunks of workItems will reduce the bottleneck
 void enqueueMapperChunk(int id, std::vector<workItem> wItems);
 
-void enqueueReducerChunk(int hashValue, std::vector<workItem> wItems);
+void enqueueReducerChunk(int reducerThreads, int hashValue, countTable localMap);
+
+void sendWork(int globalRThreadID, countTable localMap);
 
 std::vector<workItem> dequeueMapperChunk(int id, int chunkSize);
 

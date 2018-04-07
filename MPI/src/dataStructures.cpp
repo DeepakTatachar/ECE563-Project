@@ -87,11 +87,64 @@ void initializeWQStructures(int rnk, int numProc, int readerThreads, int mapperT
 	fileCount = rank * (NUM_FILES / numP);
 }
 
-void enqueueReducerChunk(int hashValue, std::vector<workItem> wItems)
-{
-	int id = hashValue % reducerThreadCount;
+MPI_Datatype workItemType;
+MPI_Aint disp[2] = { offsetof( reducerWorkItem, word), offsetof( reducerWorkItem, count) };
+MPI_Datatype type[2] = { MPI_CHAR, MPI_INT };
+int blocklen[2] = { 100, 1 };
 
-	omp_set_lock(&qRLocks[id]);
+void sendWork(int globalRThreadID, countTable localMap)
+{  
+  int processNum = globalRThreadID/reducerThreadCount;
+  MPI_Request Req;
+  int index = 0;
+  if(localMap.size() == 0)
+    {
+      MPI_Isend(&index, 1, MPI_INT, processNum, globalRThreadID, MPI_COMM_WORLD, &Req);
+      std::cout <<" No work for reducer ID "<< globalRThreadID << std::endl;
+    }
+  else
+    {
+      countTable::iterator itr1;
+
+      //Display for testing.
+	for(itr1 = localMap.begin(); itr1 != localMap.end(); itr1++)
+	      {
+		std::cout << "Global Reducer ID: " << globalRThreadID << " Word: " << itr1->first << " Word count: " << itr1->second << std::endl;
+	      }
+	//Display for testing ends.
+
+	reducerWorkItem* structArray = (reducerWorkItem*)malloc(sizeof(reducerWorkItem) * localMap.size());
+	
+	for(countTable::iterator it = localMap.begin(); it != localMap.end(); ++it)
+	{
+		structArray[index++] = reducerWorkItem(it->first, it->second);
+	}
+
+	//Display for testing.
+	for(int i = 0; i < index; i++)
+	  {
+	    std::cout << "Value in the struct array: "<< structArray[i].word << structArray[i].count << std::endl; 
+	  }
+	//Display for testing ends.
+
+	MPI_Isend(&index, 1, MPI_INT, processNum, globalRThreadID, MPI_COMM_WORLD, &Req);
+	MPI_Isend(structArray, localMap.size(), workItemType, processNum, globalRThreadID, MPI_COMM_WORLD, &Req);
+    }
+}
+/*
+void enqueueReducerChunk(int reducerThreads, int hashValue, countTable  localMap)
+{
+	int local_id = hashValue % reducerThreads;
+	int node_id = hashValue / numP;
+
+	countTable::iterator itr1;
+	for(itr1 = localMap.begin(); itr1 != localMap.end(); itr1++)
+	      {
+		std::cout << "Local Reducer ID: " << local_id << " Node ID: " << node_id << " Word: " << itr1->first << " Word count: " << itr1->second << std::endl;
+	      }
+	
+	
+	omp_set_lock(&qRLocks[local_id]);
 
 	for(std::vector<workItem>::iterator it = wItems.begin(); it != wItems.end(); ++it)
 	{
@@ -101,7 +154,7 @@ void enqueueReducerChunk(int hashValue, std::vector<workItem> wItems)
     	omp_unset_lock(&qRLocks[id]);
 	
 }
-
+*/
 void enqueueMapperChunk(int id, std::vector<workItem> wItems)
 {
 

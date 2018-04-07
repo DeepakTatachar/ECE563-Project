@@ -7,6 +7,7 @@ void spawnNewMapperThread(workQueue wQ, int mapperId, int totalReducerThreads)
         std::hash<std::string> hash;
 	unsigned int hashValue, reducerThreadID;
 	hashedDict hashMap;
+	countTable emptyMap;
 	//hashTable hashMap;
 	// Dequeue workItem from the workQ 
 	// Combine the words and map to the correct reducer
@@ -27,16 +28,26 @@ void spawnNewMapperThread(workQueue wQ, int mapperId, int totalReducerThreads)
 			//reducerThreadID here would be IDs across all nodes i.e. more than 20 if number of nodes is more than 1.
 			reducerThreadID = hashValue % totalReducerThreads;
 			hashMap[reducerThreadID][it->word] += it->count;
-			//hashMap[reducerThreadID].push_back(*it);
 		}
 
 	}
 	countTable::iterator itr1;
 	hashedDict::iterator itr2;
+	for(int i = 0; i < totalReducerThreads; i++)
+	  {
+	    if(hashMap.find(i) == hashMap.end())
+	      {
+		sendWork(i, emptyMap);
+	      }
+	    else
+	      sendWork(i, hashMap.at(i));
+	  }
+
+	/*
 	for(itr2 = hashMap.begin(); itr2 != hashMap.end(); itr2++)
 	  {
 	    //sends reducer thread ID and nested hash map to the reducer queue.
-	    //enqueueReducerChunk(itr2->first, itr2->second);
+	    enqueueReducerChunk(8,itr2->first, itr2->second);
 
 	    //for display purposes
 	    for(itr1 = itr2->second.begin(); itr1 != itr2->second.end(); itr1++)
@@ -44,7 +55,7 @@ void spawnNewMapperThread(workQueue wQ, int mapperId, int totalReducerThreads)
 		std::cout << "Reducer ID: " << itr2->first << " Word: " << itr1->first << " Word count: " << itr1->second << std::endl;
 	      }
 	  }
-	/*
+ 
 	for(hashTable::const_iterator it = hashMap.begin(); it != hashMap.end(); ++it)
 	{
 	        std::vector<workItem> temp = it->second;
