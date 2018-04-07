@@ -11,11 +11,7 @@
 #include <omp.h>
 #include <mpi.h>
 #define CHUNK_SIZE 10
-#define ALL_FILES_READ_TAG 10
-#define GET_FILE_NUM_TAG 11
 #define MAX_STR_SIZE 100
-#define SND_WORK_TAG 45
-#define SND_WORK_SIZE 44
 
 typedef struct wItem
 {

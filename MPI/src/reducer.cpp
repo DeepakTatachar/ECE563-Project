@@ -1,22 +1,39 @@
 #include <reducer.hpp>
 
-void spawnNewReducerThread(int reducerId, workQueue reducerWQ)
+void spawnNewReducerThread(int globalReducerId, int globalMapperThreadCount)
 {
 	countTable wordCount;
+	int data[2];
 
-	// Dequeue workItem from the workQ 
-	
-	std::vector<workItem> workChunk = dequeueReducerChunk(reducerId, CHUNK_SIZE);
+	MPI_Datatype workItemType;
+	MPI_Status status;
+	MPI_Aint disp[2] = { offsetof( reducerWorkItem, word), offsetof( reducerWorkItem, count) };
+	MPI_Datatype type[2] = { MPI_CHAR, MPI_INT };
+	int blocklen[2] = { MAX_STR_SIZE, 1 };
 
-	// Run until all the mapper threads are done and make sure there is no work left in the queue
-	while(!(allMappersDone() && workChunk.size() == 0))
+	MPI_Type_create_struct(2, blocklen, disp, type, &workItemType);
+	MPI_Type_commit(&workItemType);
+
+	for(int i = 0; i < globalMapperThreadCount; i++)
 	{
-		for(std::vector<workItem>::iterator it = workChunk.begin() ; it != workChunk.end(); ++it)
+		MPI_Recv(data, 2, MPI_INT, MPI_ANY_SOURCE, globalReducerId, MPI_COMM_WORLD, &status);
+
+		int size = data[0];
+		int processNum = data[1];
+
+		if(size <= 0)
 		{
-			wordCount[it->word] += it->count;
+			continue;
 		}
 
-		workChunk = dequeueReducerChunk(reducerId, CHUNK_SIZE);
+
+		reducerWorkItem* workArray = (reducerWorkItem*)malloc(sizeof(reducerWorkItem) * size);
+		MPI_Recv(workArray, size, workItemType, processNum, globalReducerId, MPI_COMM_WORLD, &status);
+
+		for(int i = 0; i < size; i++)
+		{
+				wordCount[workArray[i].word] += workArray[i].count;
+		}
 	}
 
 

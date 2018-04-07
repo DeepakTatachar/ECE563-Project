@@ -77,10 +77,7 @@ int main(int argc, char* argv[])
 			for(int i = 0; i < reducerThreads; i++)
 			{
 				#pragma omp task
-				{
-				  	workQueue workQ = getReducerWQ(i);
-				  	spawnNewReducerThread(i, workQ);
-				}
+				spawnNewReducerThread(rank + i, numP * mapperThreads);
 			}
 
 			#pragma omp taskwait
