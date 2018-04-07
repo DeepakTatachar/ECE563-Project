@@ -39,7 +39,7 @@ int main(int argc, char* argv[])
 	MPI_Init(NULL, NULL);
 	MPI_Comm_size(MPI_COMM_WORLD, &numP);
 	MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-
+	int totalReducerThreads = reducerThreads * numP;
 
 	MPI_Barrier(MPI_COMM_WORLD);
 
@@ -63,7 +63,7 @@ int main(int argc, char* argv[])
 				#pragma omp task
 				{
 					workQueue workQ = getMapperWQ(i);
-					spawnNewMapperThread(workQ, i, reducerThreads);
+					spawnNewMapperThread(workQ, i, totalReducerThreads);
 				}
 			}
 		
@@ -90,6 +90,7 @@ int main(int argc, char* argv[])
 
 	// Write the results to the file
 	writeFile("OutputFile" + std::to_string((long long int)rank) + ".txt");
-
+	
+	MPI_Finalize();
 	return 0;
 }

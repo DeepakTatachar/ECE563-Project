@@ -33,9 +33,11 @@ typedef std::vector<workQueue> workQueueList;
 
 typedef workQueueList::const_iterator workQueueListIterator;
 
-typedef std::map<unsigned int, std::vector<workItem>> hashTable;
+//typedef std::map<unsigned int, std::vector<workItem>> hashTable;
 
 typedef std::map<std::string, int> countTable;
+
+typedef std::map<unsigned int, countTable> hashedDict;
 
 // Each mapper thread creates a dictionary of word, count. 
 // This is what is accessed by the reduce threads to reduce accrosss all the mapped items
