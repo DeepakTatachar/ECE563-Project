@@ -51,15 +51,12 @@ void spawnNewReaderThread()
 				arbitrateWorkItems(createWorkItems(line));
 			}
 		}
-
 		else
 		{
 			std::cout << fileName << " not found! \n";
 		}
 		
 		inputReadFile.close();
-
-		usleep(100000);
 
 		// Get the next file to read
 		fileName = getNextSyncedFileName();
