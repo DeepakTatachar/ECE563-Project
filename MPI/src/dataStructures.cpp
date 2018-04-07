@@ -88,11 +88,14 @@ void initializeWQStructures(int rnk, int numProc, int readerThreads, int mapperT
 	}
 
 	fileCount = rank * (NUM_FILES / numP);
+
+	MPI_Type_create_struct(2, blocklen, disp, type, &workItemType);
+	MPI_Type_commit(&workItemType);
 }
 
 void sendWork(int globalRThreadID, countTable localMap)
 {  
-	int processNum = globalRThreadID / numP;
+	int processNum = globalRThreadID / reducerThreadCount;
 	MPI_Request Req;
 	int index = 0;
 	int data[2] = { 0, rank };
@@ -106,12 +109,12 @@ void sendWork(int globalRThreadID, countTable localMap)
 	{
 		countTable::iterator itr1;
 
-		//Display for testing.
+		/*//Display for testing.
 		for(itr1 = localMap.begin(); itr1 != localMap.end(); itr1++)
 		{
 			std::cout << "Global Reducer ID: " << globalRThreadID << " Word: " << itr1->first << " Word count: " << itr1->second << std::endl;
 		}
-		//Display for testing ends.
+		//Display for testing ends.*/
 
 		reducerWorkItem* structArray = (reducerWorkItem*)malloc(sizeof(reducerWorkItem) * localMap.size());
 
@@ -120,12 +123,12 @@ void sendWork(int globalRThreadID, countTable localMap)
 			structArray[index++] = reducerWorkItem(it->first, it->second);
 		}
 
-		//Display for testing.
+		/*//Display for testing.
 		for(int i = 0; i < index; i++)
 		{
 			std::cout << "Value in the struct array: "<< structArray[i].word << structArray[i].count << std::endl; 
 		}
-		//Display for testing ends.
+		//Display for testing ends.*/
 
 		data[0] = index;
 		MPI_Isend(data, 2, MPI_INT, processNum, globalRThreadID, MPI_COMM_WORLD, &Req);

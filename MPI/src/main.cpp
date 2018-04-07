@@ -46,7 +46,7 @@ int main(int argc, char* argv[])
 	// Create maximum thread number of reducers so the second parameter is maxThreads 
 	initializeWQStructures(rank, numP, readerThreads, mapperThreads, reducerThreads);
 
-	std::cout << " Rank process starting " << rank << std::endl;
+	std::cout << "Rank process starting " << rank << " Max threads per node :" << maxThreads << std::endl;
 
 	#pragma omp parallel
 	{
