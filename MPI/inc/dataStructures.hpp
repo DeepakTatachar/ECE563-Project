@@ -12,6 +12,8 @@
 #include <mpi.h>
 #define CHUNK_SIZE 10
 #define MAX_STR_SIZE 100
+#define NUM_LOCK 25
+#define NUM_FILES 20
 
 typedef struct wItem
 {
@@ -79,13 +81,9 @@ typedef std::map<std::string, int> mappedDictionary;
 // Writing chinks of work items and reading chunks of workItems will reduce the bottleneck
 void enqueueMapperChunk(int id, std::vector<workItem> wItems);
 
-void enqueueReducerChunk(int reducerThreads, int hashValue, countTable localMap);
-
 void sendWork(int globalRThreadID, countTable localMap);
 
 std::vector<workItem> dequeueMapperChunk(int id, int chunkSize);
-
-std::vector<workItem> dequeueReducerChunk(int id, int chunkSize);
 
 void arbitrateWorkItems(std::vector<workItem> workItems);
 

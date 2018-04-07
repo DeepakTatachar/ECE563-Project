@@ -1,6 +1,4 @@
 #include <dataStructures.hpp>
-#define NUM_LOCK 25
-#define NUM_FILES 20
 
 workQueueList globalWorkQueueList;
 workQueueList globalReducerQueueList;
@@ -16,6 +14,11 @@ omp_lock_t countTableLock;
 
 int readerThreadCount, mapperThreadCount, reducerThreadCount, rank, numP;
 int fileCount = 1, currentMapperThreadQ = 0, mapperThreadFinishCount = 0, readerThreadFinishCount = 0;
+
+MPI_Datatype workItemType;
+MPI_Aint disp[2] = { offsetof( reducerWorkItem, word), offsetof( reducerWorkItem, count) };
+MPI_Datatype type[2] = { MPI_CHAR, MPI_INT };
+int blocklen[2] = { MAX_STR_SIZE, 1 };
 
 workQueue getMapperWQ(int i)
 {
@@ -87,74 +90,49 @@ void initializeWQStructures(int rnk, int numProc, int readerThreads, int mapperT
 	fileCount = rank * (NUM_FILES / numP);
 }
 
-MPI_Datatype workItemType;
-MPI_Aint disp[2] = { offsetof( reducerWorkItem, word), offsetof( reducerWorkItem, count) };
-MPI_Datatype type[2] = { MPI_CHAR, MPI_INT };
-int blocklen[2] = { 100, 1 };
-
 void sendWork(int globalRThreadID, countTable localMap)
 {  
-  int processNum = globalRThreadID/reducerThreadCount;
-  MPI_Request Req;
-  int index = 0;
-  if(localMap.size() == 0)
-    {
-      MPI_Isend(&index, 1, MPI_INT, processNum, globalRThreadID, MPI_COMM_WORLD, &Req);
-      std::cout <<" No work for reducer ID "<< globalRThreadID << std::endl;
-    }
-  else
-    {
-      countTable::iterator itr1;
+	int processNum = globalRThreadID / numP;
+	MPI_Request Req;
+	int index = 0;
+	int data[2] = { 0, rank };
 
-      //Display for testing.
-	for(itr1 = localMap.begin(); itr1 != localMap.end(); itr1++)
-	      {
-		std::cout << "Global Reducer ID: " << globalRThreadID << " Word: " << itr1->first << " Word count: " << itr1->second << std::endl;
-	      }
-	//Display for testing ends.
-
-	reducerWorkItem* structArray = (reducerWorkItem*)malloc(sizeof(reducerWorkItem) * localMap.size());
-	
-	for(countTable::iterator it = localMap.begin(); it != localMap.end(); ++it)
+	if(localMap.size() == 0)
 	{
-		structArray[index++] = reducerWorkItem(it->first, it->second);
+		MPI_Isend(data, 2, MPI_INT, processNum, globalRThreadID, MPI_COMM_WORLD, &Req);
+		std::cout <<" No work for reducer ID "<< globalRThreadID << std::endl;
 	}
-
-	//Display for testing.
-	for(int i = 0; i < index; i++)
-	  {
-	    std::cout << "Value in the struct array: "<< structArray[i].word << structArray[i].count << std::endl; 
-	  }
-	//Display for testing ends.
-
-	MPI_Isend(&index, 1, MPI_INT, processNum, globalRThreadID, MPI_COMM_WORLD, &Req);
-	MPI_Isend(structArray, localMap.size(), workItemType, processNum, globalRThreadID, MPI_COMM_WORLD, &Req);
-    }
-}
-/*
-void enqueueReducerChunk(int reducerThreads, int hashValue, countTable  localMap)
-{
-	int local_id = hashValue % reducerThreads;
-	int node_id = hashValue / numP;
-
-	countTable::iterator itr1;
-	for(itr1 = localMap.begin(); itr1 != localMap.end(); itr1++)
-	      {
-		std::cout << "Local Reducer ID: " << local_id << " Node ID: " << node_id << " Word: " << itr1->first << " Word count: " << itr1->second << std::endl;
-	      }
-	
-	
-	omp_set_lock(&qRLocks[local_id]);
-
-	for(std::vector<workItem>::iterator it = wItems.begin(); it != wItems.end(); ++it)
+	else
 	{
-		globalReducerQueueList[id].push(*it);
-	}
+		countTable::iterator itr1;
 
-    	omp_unset_lock(&qRLocks[id]);
-	
+		//Display for testing.
+		for(itr1 = localMap.begin(); itr1 != localMap.end(); itr1++)
+		{
+			std::cout << "Global Reducer ID: " << globalRThreadID << " Word: " << itr1->first << " Word count: " << itr1->second << std::endl;
+		}
+		//Display for testing ends.
+
+		reducerWorkItem* structArray = (reducerWorkItem*)malloc(sizeof(reducerWorkItem) * localMap.size());
+
+		for(countTable::iterator it = localMap.begin(); it != localMap.end(); ++it)
+		{
+			structArray[index++] = reducerWorkItem(it->first, it->second);
+		}
+
+		//Display for testing.
+		for(int i = 0; i < index; i++)
+		{
+			std::cout << "Value in the struct array: "<< structArray[i].word << structArray[i].count << std::endl; 
+		}
+		//Display for testing ends.
+
+		data[0] = index;
+		MPI_Isend(data, 2, MPI_INT, processNum, globalRThreadID, MPI_COMM_WORLD, &Req);
+		MPI_Isend(structArray, localMap.size(), workItemType, processNum, globalRThreadID, MPI_COMM_WORLD, &Req);
+	}
 }
-*/
+
 void enqueueMapperChunk(int id, std::vector<workItem> wItems)
 {
 
@@ -206,29 +184,6 @@ int allMappersDone()
 		return 1;
 	else
 		return 0;
-}
-
-std::vector<workItem> dequeueReducerChunk(int id, int chunkSize)
-{
-	std::vector<workItem> workChunk;
-
-	if(globalReducerQueueList[id].size() == 0)
-	{
-		return workChunk;
-	}
-	
-	omp_set_lock(&qRLocks[id]);
-
-	int i = chunkSize;
-	while(i-- > 0 && globalReducerQueueList[id].size() != 0)
-	{
-		workChunk.push_back(globalReducerQueueList[id].front());
-		globalReducerQueueList[id].pop();
-	}
-
-	omp_unset_lock(&qRLocks[id]);
-
-	return workChunk;
 }
 
 std::vector<workItem> dequeueMapperChunk(int id, int chunkSize)
