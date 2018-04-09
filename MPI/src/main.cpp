@@ -32,9 +32,9 @@ int main(int argc, char* argv[])
 	omp_set_num_threads(6);
 
         int maxThreads = omp_get_max_threads();
-        int readerThreads = 2;
-	int mapperThreads = 2;
-	int reducerThreads = 1;//maxThreads; 
+        int readerThreads = 1;
+	int mapperThreads = 1;
+	int reducerThreads = 2;//maxThreads; 
 
 	MPI_Init(NULL, NULL);
 	MPI_Comm_size(MPI_COMM_WORLD, &numP);

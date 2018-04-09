@@ -33,6 +33,7 @@ void spawnNewMapperThread(workQueue wQ, int mapperId, int totalReducerThreads)
 
 	}
 
+	mapperFinshed();
 
 	for(int i = 0; i < totalReducerThreads; i++)
 	{
@@ -47,6 +48,5 @@ void spawnNewMapperThread(workQueue wQ, int mapperId, int totalReducerThreads)
 		}
 	}
 
-	mapperFinshed();
 }
 

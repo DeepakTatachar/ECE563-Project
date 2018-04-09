@@ -7,7 +7,7 @@ void spawnNewReducerThread(int globalReducerId, int globalMapperThreadCount, int
 
 	MPI_Datatype workItemType;
 	MPI_Status status;
-	MPI_Aint disp[2] = { offsetof( reducerWorkItem, word), offsetof( reducerWorkItem, count) };
+	MPI_Aint disp[2] = { offsetof( workItem, word), offsetof( workItem, count) };
 	MPI_Datatype type[2] = { MPI_CHAR, MPI_INT };
 	int blocklen[2] = { MAX_STR_SIZE, 1 };
 
@@ -29,7 +29,7 @@ void spawnNewReducerThread(int globalReducerId, int globalMapperThreadCount, int
 		}
 
 
-		reducerWorkItem* workArray = (reducerWorkItem*)malloc(sizeof(reducerWorkItem) * size);
+		workItem* workArray = (workItem*)malloc(sizeof(workItem) * size);
 		MPI_Recv(workArray, size, workItemType, processNum, globalReducerId, MPI_COMM_WORLD, &status);
 
 		for(int i = 0; i < size; i++)

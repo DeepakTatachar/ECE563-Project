@@ -17,24 +17,10 @@
 
 typedef struct wItem
 {
-	std::string word;
-	int count;
-
-	wItem(std::string wrd, int cnt)
-	{
-		word = wrd;
-		count = cnt;
-	}
-
-} workItem;
-
-
-typedef struct reducerWItem
-{
 	char word[MAX_STR_SIZE];
 	int count;
 
-	reducerWItem(std::string wrd, int cnt)
+	wItem(std::string wrd, int cnt)
 	{
 		int i;
 		int maxLength = MAX_STR_SIZE;
@@ -57,7 +43,7 @@ typedef struct reducerWItem
 		word[i] = '\0';
 		count = cnt;
 	}
-} reducerWorkItem;
+} workItem;
 
 typedef std::queue<workItem> workQueue;
 
@@ -92,8 +78,6 @@ std::string getNextSyncedFileName();
 void initializeWQStructures(int rnk, int numProc,int readerThreads, int mapperThreads, int reducerThreads);
 
 workQueue getMapperWQ(int i);
-
-workQueue getReducerWQ(int i);
 
 void readerFinshed();
 

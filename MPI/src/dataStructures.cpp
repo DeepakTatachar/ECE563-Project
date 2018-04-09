@@ -5,8 +5,6 @@ workQueueList globalReducerQueueList;
 std::vector<countTable> countTableList;
 
 omp_lock_t qListLock, fileCountLock;
-omp_lock_t qLocks[NUM_LOCK];
-omp_lock_t qRLocks[NUM_LOCK];
 omp_lock_t readerFinishLock;
 omp_lock_t mapperFinishLock;
 omp_lock_t arbitrateLock;
@@ -16,20 +14,19 @@ int readerThreadCount, mapperThreadCount, reducerThreadCount, rank, numP;
 int fileCount = 1, currentMapperThreadQ = 0, mapperThreadFinishCount = 0, readerThreadFinishCount = 0;
 
 MPI_Datatype workItemType;
-MPI_Aint disp[2] = { offsetof( reducerWorkItem, word), offsetof( reducerWorkItem, count) };
+MPI_Aint disp[2] = { offsetof( workItem, word), offsetof( workItem, count) };
 MPI_Datatype type[2] = { MPI_CHAR, MPI_INT };
 int blocklen[2] = { MAX_STR_SIZE, 1 };
 
 workQueue getMapperWQ(int i)
 {
-	//std::cout << "Do not call GetMapperWQ method unless you know what you are doing" << std::endl;
-	return globalWorkQueueList[i];
-}
+	omp_set_lock(&qListLock);
 
-workQueue getReducerWQ(int i)
-{
-	//std::cout << "Do not call GetReducerWQ method unless you know what you are doing" << std::endl;
-	return globalReducerQueueList[i];
+	workQueue value = globalWorkQueueList[i];
+
+	omp_unset_lock(&qListLock);
+
+	return value;
 }
 
 std::string getNextSyncedFileName()
@@ -67,15 +64,6 @@ void initializeWQStructures(int rnk, int numProc, int readerThreads, int mapperT
 	omp_init_lock(&mapperFinishLock);
 	omp_init_lock(&countTableLock);
 
-	for(int i = 0; i < NUM_LOCK; i++)
-	{
-		omp_init_lock(&qLocks[i]);
-	}
-
-	for(int i = 0; i < NUM_LOCK; i++)
-	{
-		omp_init_lock(&qRLocks[i]);
-	}
 
 	for(int i = 0; i < mapperThreads; i++)
 	{
@@ -104,32 +92,15 @@ void sendWork(int globalRThreadID, countTable localMap)
 	if(localMap.size() == 0)
 	{
 		MPI_Send(data, 2, MPI_INT, processNum, globalRThreadID, MPI_COMM_WORLD);
-		std::cout <<" No work for reducer ID "<< globalRThreadID << std::endl;
 	}
 	else
 	{
-		countTable::iterator itr1;
-
-		/*//Display for testing.
-		for(itr1 = localMap.begin(); itr1 != localMap.end(); itr1++)
-		{
-			std::cout << "Global Reducer ID: " << globalRThreadID << " Word: " << itr1->first << " Word count: " << itr1->second << std::endl;
-		}
-		//Display for testing ends.*/
-
-		reducerWorkItem* structArray = (reducerWorkItem*)malloc(sizeof(reducerWorkItem) * localMap.size());
+		workItem* structArray = (workItem*)malloc(sizeof(workItem) * localMap.size());
 
 		for(countTable::iterator it = localMap.begin(); it != localMap.end(); ++it)
 		{
-			structArray[index++] = reducerWorkItem(it->first, it->second);
+			structArray[index++] = workItem(it->first, it->second);
 		}
-
-		/*//Display for testing.
-		for(int i = 0; i < index; i++)
-		{
-			std::cout << "Value in the struct array: "<< structArray[i].word << structArray[i].count << std::endl; 
-		}
-		//Display for testing ends.*/
 
 		data[0] = index;
 		MPI_Send(data, 2, MPI_INT, processNum, globalRThreadID, MPI_COMM_WORLD);
@@ -140,14 +111,14 @@ void sendWork(int globalRThreadID, countTable localMap)
 void enqueueMapperChunk(int id, std::vector<workItem> wItems)
 {
 
-	omp_set_lock(&qLocks[id]);
+	omp_set_lock(&qListLock);
 	
 	for(std::vector<workItem>::iterator it = wItems.begin(); it != wItems.end(); ++it)
 	{
 		globalWorkQueueList[id].push(*it);
 	}
 
-    	omp_unset_lock(&qLocks[id]);
+    	omp_unset_lock(&qListLock);
 	
 }
 
@@ -166,6 +137,11 @@ void mapperFinshed()
 	omp_set_lock(&readerFinishLock);
 
 	mapperThreadFinishCount++;
+
+	if(mapperThreadFinishCount == mapperThreadCount)
+	{
+		std::cout << "All Mappers are done on this node" << std::endl;
+	}
 	
 	omp_unset_lock(&readerFinishLock);
 }
@@ -199,7 +175,7 @@ std::vector<workItem> dequeueMapperChunk(int id, int chunkSize)
 		return workChunk;
 	}
 	
-	omp_set_lock(&qLocks[id]);
+	omp_set_lock(&qListLock);
 
 	int i = chunkSize;
 	while(i-- > 0 && globalWorkQueueList[id].size() != 0)
@@ -208,7 +184,7 @@ std::vector<workItem> dequeueMapperChunk(int id, int chunkSize)
 		globalWorkQueueList[id].pop();
 	}
 
-	omp_unset_lock(&qLocks[id]);
+	omp_unset_lock(&qListLock);
 
 	return workChunk;
 }
