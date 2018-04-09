@@ -33,7 +33,7 @@ int main(int argc, char* argv[])
 
         int maxThreads = omp_get_max_threads();
         int readerThreads = 1;
-	int mapperThreads = 1;
+	int mapperThreads = 2;
 	int reducerThreads = 2;//maxThreads; 
 
 	MPI_Init(NULL, NULL);
@@ -70,8 +70,10 @@ int main(int argc, char* argv[])
 
 			for(int i = 0; i < reducerThreads; i++)
 			{
+				int globalRId = rank * reducerThreads + i;
+
 				#pragma omp task
-				spawnNewReducerThread(rank + i, numP * mapperThreads, mapperThreads);
+				spawnNewReducerThread(globalRId, numP * mapperThreads, mapperThreads);
 			}
 
 			#pragma omp taskwait

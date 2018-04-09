@@ -82,30 +82,21 @@ void initializeWQStructures(int rnk, int numProc, int readerThreads, int mapperT
 }
 
 void sendWork(int globalRThreadID, countTable localMap)
-{  
+{
 	int processNum = globalRThreadID / reducerThreadCount;
 	MPI_Request Req;
 	int index = 0;
-	int data[2] = { 0, rank };
-	std::cout << "Sending to : " << processNum << std::endl;
 
-	if(localMap.size() == 0)
+	std::cout << rank << " sending to : " << processNum << std::endl;
+
+	workItem* structArray = (workItem*)malloc(sizeof(workItem) * localMap.size());
+
+	for(countTable::iterator it = localMap.begin(); it != localMap.end(); ++it)
 	{
-		MPI_Send(data, 2, MPI_INT, processNum, globalRThreadID, MPI_COMM_WORLD);
+		structArray[index++] = workItem(it->first, it->second);
 	}
-	else
-	{
-		workItem* structArray = (workItem*)malloc(sizeof(workItem) * localMap.size());
 
-		for(countTable::iterator it = localMap.begin(); it != localMap.end(); ++it)
-		{
-			structArray[index++] = workItem(it->first, it->second);
-		}
-
-		data[0] = index;
-		MPI_Send(data, 2, MPI_INT, processNum, globalRThreadID, MPI_COMM_WORLD);
-		MPI_Send(structArray, localMap.size(), workItemType, processNum, globalRThreadID, MPI_COMM_WORLD);
-	}
+	MPI_Isend(structArray, localMap.size(), workItemType, processNum, globalRThreadID, MPI_COMM_WORLD, &Req);
 }
 
 void enqueueMapperChunk(int id, std::vector<workItem> wItems)

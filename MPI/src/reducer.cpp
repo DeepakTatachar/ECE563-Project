@@ -3,7 +3,6 @@
 void spawnNewReducerThread(int globalReducerId, int globalMapperThreadCount, int mapperThreadsPerProcess)
 {
 	countTable wordCount;
-	int data[2];
 
 	MPI_Datatype workItemType;
 	MPI_Status status;
@@ -16,24 +15,24 @@ void spawnNewReducerThread(int globalReducerId, int globalMapperThreadCount, int
 
 	for(int i = 0; i < globalMapperThreadCount; i++)
 	{
-		std::cout << "Waiting to receive from : " << i / mapperThreadsPerProcess << std::endl; 
-		MPI_Recv(data, 2, MPI_INT, i / mapperThreadsPerProcess, globalReducerId, MPI_COMM_WORLD, &status);
-		std::cout << "Received from : " << i / mapperThreadsPerProcess << std::endl; 	
+	        MPI_Probe(MPI_ANY_SOURCE, globalReducerId, MPI_COMM_WORLD, &status);
+		int processNum = status.MPI_SOURCE;
+		int size;
 
-		int size = data[0];
-		int processNum = data[1];
+		std::cout << "Received from : " << processNum << std::endl; 	
 
-		if(size <= 0)
-		{
-			continue;
-		}
-
+		MPI_Get_count(&status, workItemType, &size);
 
 		workItem* workArray = (workItem*)malloc(sizeof(workItem) * size);
 		MPI_Recv(workArray, size, workItemType, processNum, globalReducerId, MPI_COMM_WORLD, &status);
 
 		for(int i = 0; i < size; i++)
 		{
+			if(workArray[i].count == 0)
+		        {
+				break;
+			}
+
 			wordCount[workArray[i].word] += workArray[i].count;
 		}
 	}
