@@ -22,13 +22,13 @@ int blocklen[2] = { MAX_STR_SIZE, 1 };
 
 workQueue getMapperWQ(int i)
 {
-	std::cout << "Do not call GetMapperWQ method unless you know what you are doing" << std::endl;
+	//std::cout << "Do not call GetMapperWQ method unless you know what you are doing" << std::endl;
 	return globalWorkQueueList[i];
 }
 
 workQueue getReducerWQ(int i)
 {
-	std::cout << "Do not call GetReducerWQ method unless you know what you are doing" << std::endl;
+	//std::cout << "Do not call GetReducerWQ method unless you know what you are doing" << std::endl;
 	return globalReducerQueueList[i];
 }
 
@@ -99,10 +99,11 @@ void sendWork(int globalRThreadID, countTable localMap)
 	MPI_Request Req;
 	int index = 0;
 	int data[2] = { 0, rank };
+	std::cout << "Sending to : " << processNum << std::endl;
 
 	if(localMap.size() == 0)
 	{
-		MPI_Isend(data, 2, MPI_INT, processNum, globalRThreadID, MPI_COMM_WORLD, &Req);
+		MPI_Send(data, 2, MPI_INT, processNum, globalRThreadID, MPI_COMM_WORLD);
 		std::cout <<" No work for reducer ID "<< globalRThreadID << std::endl;
 	}
 	else
@@ -131,8 +132,8 @@ void sendWork(int globalRThreadID, countTable localMap)
 		//Display for testing ends.*/
 
 		data[0] = index;
-		MPI_Isend(data, 2, MPI_INT, processNum, globalRThreadID, MPI_COMM_WORLD, &Req);
-		MPI_Isend(structArray, localMap.size(), workItemType, processNum, globalRThreadID, MPI_COMM_WORLD, &Req);
+		MPI_Send(data, 2, MPI_INT, processNum, globalRThreadID, MPI_COMM_WORLD);
+		MPI_Send(structArray, localMap.size(), workItemType, processNum, globalRThreadID, MPI_COMM_WORLD);
 	}
 }
 

@@ -29,12 +29,12 @@ int main(int argc, char* argv[])
 	workQueueListIterator wQ;
 
 	// TODO Set number of threads from command line argument
-	omp_set_num_threads(8);
+	omp_set_num_threads(6);
 
         int maxThreads = omp_get_max_threads();
         int readerThreads = 2;
 	int mapperThreads = 2;
-	int reducerThreads = maxThreads; 
+	int reducerThreads = 1;//maxThreads; 
 
 	MPI_Init(NULL, NULL);
 	MPI_Comm_size(MPI_COMM_WORLD, &numP);
@@ -46,7 +46,7 @@ int main(int argc, char* argv[])
 	// Create maximum thread number of reducers so the second parameter is maxThreads 
 	initializeWQStructures(rank, numP, readerThreads, mapperThreads, reducerThreads);
 
-	std::cout << "Rank process starting " << rank << " Max threads per node :" << maxThreads << std::endl;
+	std::cout << "Rank process starting " << rank << std::endl << "Max threads per node :" << maxThreads << std::endl;
 
 	#pragma omp parallel
 	{
@@ -67,17 +67,11 @@ int main(int argc, char* argv[])
 				}
 			}
 		
-		}
 
-
-		#pragma omp barrier
-
-		#pragma omp master
-		{
 			for(int i = 0; i < reducerThreads; i++)
 			{
 				#pragma omp task
-				spawnNewReducerThread(rank + i, numP * mapperThreads);
+				spawnNewReducerThread(rank + i, numP * mapperThreads, mapperThreads);
 			}
 
 			#pragma omp taskwait

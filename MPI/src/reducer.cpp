@@ -1,6 +1,6 @@
 #include <reducer.hpp>
 
-void spawnNewReducerThread(int globalReducerId, int globalMapperThreadCount)
+void spawnNewReducerThread(int globalReducerId, int globalMapperThreadCount, int mapperThreadsPerProcess)
 {
 	countTable wordCount;
 	int data[2];
@@ -16,7 +16,9 @@ void spawnNewReducerThread(int globalReducerId, int globalMapperThreadCount)
 
 	for(int i = 0; i < globalMapperThreadCount; i++)
 	{
-		MPI_Recv(data, 2, MPI_INT, MPI_ANY_SOURCE, globalReducerId, MPI_COMM_WORLD, &status);
+		std::cout << "Waiting to receive from : " << i / mapperThreadsPerProcess << std::endl; 
+		MPI_Recv(data, 2, MPI_INT, i / mapperThreadsPerProcess, globalReducerId, MPI_COMM_WORLD, &status);
+		std::cout << "Received from : " << i / mapperThreadsPerProcess << std::endl; 	
 
 		int size = data[0];
 		int processNum = data[1];
@@ -32,7 +34,7 @@ void spawnNewReducerThread(int globalReducerId, int globalMapperThreadCount)
 
 		for(int i = 0; i < size; i++)
 		{
-				wordCount[workArray[i].word] += workArray[i].count;
+			wordCount[workArray[i].word] += workArray[i].count;
 		}
 	}
 

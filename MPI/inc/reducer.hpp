@@ -4,6 +4,6 @@
 #include <dataStructures.hpp>
 #include <map>
 
-void spawnNewReducerThread(int globalReducerId, int globalMapperThreadCount);
+void spawnNewReducerThread(int globalReducerId, int globalMapperThreadCount,int mapperThreadsPerProcess);
 
 #endif
