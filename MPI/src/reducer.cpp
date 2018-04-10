@@ -19,8 +19,6 @@ void spawnNewReducerThread(int globalReducerId, int globalMapperThreadCount, int
 		int processNum = status.MPI_SOURCE;
 		int size;
 
-		//std::cout << "Received from : " << processNum << std::endl; 	
-
 		MPI_Get_count(&status, rWorkitemType, &size);
 
 		workItem* workArray = (workItem*)malloc(sizeof(workItem) * size);

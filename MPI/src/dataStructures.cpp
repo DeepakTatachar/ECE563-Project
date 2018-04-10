@@ -88,8 +88,6 @@ void sendWork(int globalRThreadID, countTable localMap)
 	int index = 0;
 	int size = localMap.size();
 
-	//std::cout << rank << " sending to : " << processNum << std::endl;
-
 	workItem* structArray = (workItem*)malloc(sizeof(workItem) * size);
 
 	for(countTable::iterator it = localMap.begin(); it != localMap.end(); ++it)
@@ -131,11 +129,6 @@ void mapperFinshed()
 	omp_set_lock(&readerFinishLock);
 
 	mapperThreadFinishCount++;
-
-	if(mapperThreadFinishCount == mapperThreadCount)
-	{
-		std::cout << "All Mappers are done on this node" << std::endl;
-	}
 	
 	omp_unset_lock(&readerFinishLock);
 }
@@ -143,7 +136,6 @@ void mapperFinshed()
 int allReadersDone()
 {
 	// Note reading requires no lock
-
 	if(readerThreadFinishCount == readerThreadCount)
 		return 1;
 	else
@@ -153,7 +145,6 @@ int allReadersDone()
 int allMappersDone()
 {
 	// Note reading requires no lock
-
 	if(mapperThreadFinishCount == mapperThreadCount)
 		return 1;
 	else
