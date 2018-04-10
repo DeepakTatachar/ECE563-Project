@@ -37,14 +37,18 @@ void spawnNewMapperThread(workQueue wQ, int mapperId, int totalReducerThreads)
 
 	for(int i = 0; i < totalReducerThreads; i++)
 	{
+
 		// Check if we need to send stuff to a particular reducer. If not send emptyMap;
 		if(hashMap.find(i) == hashMap.end())
 		{
+			std::cout << "Empty" << i << std::endl;
 			sendWork(i, emptyMap);
 		}
 		else
 		{
+			std::cout << mapperId << " trying to send to " << i << std::endl;
 			sendWork(i, hashMap.at(i));
+			std::cout << mapperId << " sent to " << i << std::endl;
 		}
 	}
 

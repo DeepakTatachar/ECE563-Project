@@ -24,7 +24,7 @@
 
 int main(int argc, char* argv[])
 {
-	int numP, rank;
+	int numP, rank, provided;
 
 	workQueueListIterator wQ;
 
@@ -36,7 +36,7 @@ int main(int argc, char* argv[])
 	int mapperThreads = 2;
 	int reducerThreads = 2;//maxThreads; 
 
-	MPI_Init(NULL, NULL);
+	MPI_Init_thread( 0, 0, MPI_THREAD_MULTIPLE, &provided);
 	MPI_Comm_size(MPI_COMM_WORLD, &numP);
 	MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 	int totalReducerThreads = reducerThreads * numP;

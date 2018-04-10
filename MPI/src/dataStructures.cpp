@@ -86,17 +86,20 @@ void sendWork(int globalRThreadID, countTable localMap)
 	int processNum = globalRThreadID / reducerThreadCount;
 	MPI_Request Req;
 	int index = 0;
+	int size = localMap.size();
 
-	std::cout << rank << " sending to : " << processNum << std::endl;
+	//std::cout << rank << " sending to : " << processNum << std::endl;
 
-	workItem* structArray = (workItem*)malloc(sizeof(workItem) * localMap.size());
+	workItem* structArray = (workItem*)malloc(sizeof(workItem) * size);
 
 	for(countTable::iterator it = localMap.begin(); it != localMap.end(); ++it)
 	{
 		structArray[index++] = workItem(it->first, it->second);
 	}
 
-	MPI_Isend(structArray, localMap.size(), workItemType, processNum, globalRThreadID, MPI_COMM_WORLD, &Req);
+	MPI_Send(structArray, size, workItemType, processNum, globalRThreadID, MPI_COMM_WORLD);
+
+	free(structArray);
 }
 
 void enqueueMapperChunk(int id, std::vector<workItem> wItems)
