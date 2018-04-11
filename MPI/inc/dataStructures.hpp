@@ -14,6 +14,7 @@
 #define MAX_STR_SIZE 100
 #define NUM_LOCK 25
 #define NUM_FILES 20
+#define FILE_SYNC_TAG 200
 
 typedef struct wItem
 {
@@ -73,7 +74,7 @@ std::vector<workItem> dequeueMapperChunk(int id, int chunkSize);
 
 void arbitrateWorkItems(std::vector<workItem> workItems);
 
-std::string getNextSyncedFileName();
+std::string getNextSyncedFileName(int localReaderThreadId);
 
 void initializeWQStructures(int rnk, int numProc,int readerThreads, int mapperThreads, int reducerThreads);
 

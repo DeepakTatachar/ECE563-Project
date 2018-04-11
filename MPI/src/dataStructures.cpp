@@ -4,14 +4,14 @@ workQueueList globalWorkQueueList;
 workQueueList globalReducerQueueList;
 std::vector<countTable> countTableList;
 
-omp_lock_t qListLock, fileCountLock;
+omp_lock_t qListLock;
 omp_lock_t readerFinishLock;
 omp_lock_t mapperFinishLock;
 omp_lock_t arbitrateLock;
 omp_lock_t countTableLock;
 
 int readerThreadCount, mapperThreadCount, reducerThreadCount, rank, numP;
-int fileCount = 1, currentMapperThreadQ = 0, mapperThreadFinishCount = 0, readerThreadFinishCount = 0;
+int currentMapperThreadQ = 0, mapperThreadFinishCount = 0, readerThreadFinishCount = 0;
 
 MPI_Datatype workItemType;
 MPI_Aint disp[2] = { offsetof( workItem, word), offsetof( workItem, count) };
@@ -29,23 +29,24 @@ workQueue getMapperWQ(int i)
 	return value;
 }
 
-std::string getNextSyncedFileName()
+std::string getNextSyncedFileName(int localReaderThreadId)
 {
 	std::string returnValue;
-	omp_set_lock(&fileCountLock);
-	int maxFileNum = ((rank + 1) * NUM_FILES) / numP;
-	
-	if(fileCount < maxFileNum)
+	int fileCount;
+	MPI_Status status;
+
+	MPI_Send(&localReaderThreadId, 1, MPI_INT, 0, FILE_SYNC_TAG, MPI_COMM_WORLD);
+	MPI_Recv(&fileCount, 1, MPI_INT, 0, localReaderThreadId, MPI_COMM_WORLD, &status);
+
+	if(fileCount != -1)
 	{
 		returnValue = std::to_string((long long int)fileCount) + ".txt";
-		fileCount++;
 	}
 	else
 	{
 		returnValue = "";
 	}
 
-	omp_unset_lock(&fileCountLock);
 	return returnValue;
 }
 
@@ -58,7 +59,6 @@ void initializeWQStructures(int rnk, int numProc, int readerThreads, int mapperT
 	reducerThreadCount = reducerThreads;
 
 	omp_init_lock(&qListLock);
-	omp_init_lock(&fileCountLock);
 	omp_init_lock(&readerFinishLock);
 	omp_init_lock(&arbitrateLock);
 	omp_init_lock(&mapperFinishLock);
@@ -74,8 +74,6 @@ void initializeWQStructures(int rnk, int numProc, int readerThreads, int mapperT
 	{
 		globalReducerQueueList.push_back(std::queue<workItem>());
 	}
-
-	fileCount = rank * (NUM_FILES / numP);
 
 	MPI_Type_create_struct(2, blocklen, disp, type, &workItemType);
 	MPI_Type_commit(&workItemType);

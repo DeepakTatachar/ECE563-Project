@@ -23,10 +23,11 @@ std::vector<workItem> createWorkItems(std::string line)
 	return lineWorkItems;
 }
 
-void spawnNewReaderThread()
+void spawnNewReaderThread(int localReaderThreadId)
 {
+	int readerThreadId = FILE_SYNC_TAG + localReaderThreadId + 1;
 
-	std::string fileName = getNextSyncedFileName();
+	std::string fileName = getNextSyncedFileName(readerThreadId);
 
 	while(fileName.compare(""))
 	{
@@ -59,7 +60,7 @@ void spawnNewReaderThread()
 		inputReadFile.close();
 
 		// Get the next file to read
-		fileName = getNextSyncedFileName();
+		fileName = getNextSyncedFileName(readerThreadId);
 	}
 
 	readerFinshed();

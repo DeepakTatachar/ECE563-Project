@@ -7,6 +7,6 @@
 #include <sstream>
 #include <vector>
 
-void spawnNewReaderThread();
+void spawnNewReaderThread(int localReaderThreadId);
 
 #endif
