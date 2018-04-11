@@ -6,7 +6,6 @@ workQueueList globalReducerQueueList;
 std::vector<countTable> countTableList;
 
 omp_lock_t qListLock, fileCountLock;
-omp_lock_t qLocks[NUM_LOCK];
 omp_lock_t qRLocks[NUM_LOCK];
 omp_lock_t readerFinishLock;
 omp_lock_t mapperFinishLock;
@@ -19,7 +18,14 @@ int fileCount = 1, currentMapperThreadQ = 0, mapperThreadFinishCount = 0, reader
 workQueue getMapperWQ(int i)
 {
 	std::cout << "Do not call GetMapperWQ method unless you know what you are doing" << std::endl;
-	return globalWorkQueueList[i];
+
+	omp_set_lock(&qListLock);
+
+	workQueue value = globalWorkQueueList[i];
+
+	omp_unset_lock(&qListLock);
+
+	return value;
 }
 
 workQueue getReducerWQ(int i)
@@ -62,11 +68,6 @@ void initializeWQStructures(int readerThreads, int mapperThreads, int reducerThr
 
 	for(int i = 0; i < NUM_LOCK; i++)
 	{
-		omp_init_lock(&qLocks[i]);
-	}
-
-	for(int i = 0; i < NUM_LOCK; i++)
-	{
 		omp_init_lock(&qRLocks[i]);
 	}
 
@@ -99,14 +100,14 @@ void enqueueReducerChunk(int hashValue, std::vector<workItem> wItems)
 void enqueueMapperChunk(int id, std::vector<workItem> wItems)
 {
 
-	omp_set_lock(&qLocks[id]);
+	omp_set_lock(&qListLock);
 	
 	for(std::vector<workItem>::iterator it = wItems.begin(); it != wItems.end(); ++it)
 	{
 		globalWorkQueueList[id].push(*it);
 	}
 
-    	omp_unset_lock(&qLocks[id]);
+    	omp_unset_lock(&qListLock);
 	
 }
 
@@ -181,7 +182,7 @@ std::vector<workItem> dequeueMapperChunk(int id, int chunkSize)
 		return workChunk;
 	}
 	
-	omp_set_lock(&qLocks[id]);
+	omp_set_lock(&qListLock);
 
 	int i = chunkSize;
 	while(i-- > 0 && globalWorkQueueList[id].size() != 0)
@@ -190,7 +191,7 @@ std::vector<workItem> dequeueMapperChunk(int id, int chunkSize)
 		globalWorkQueueList[id].pop();
 	}
 
-	omp_unset_lock(&qLocks[id]);
+	omp_unset_lock(&qListLock);
 
 	return workChunk;
 }

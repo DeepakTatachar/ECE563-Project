@@ -26,11 +26,11 @@ int main(int argc, char* argv[])
 	workQueueListIterator wQ;
 
 	// TODO Set number of threads from command line argument
-	omp_set_num_threads(4);
+	omp_set_num_threads(8);
 
         int maxThreads = omp_get_max_threads();
-        int readerThreads = 2;
-	int mapperThreads = 2;
+        int readerThreads = 16;
+	int mapperThreads = 4;
 	int reducerThreads = maxThreads; 
 
 	// Create maximum thread number of reducers so the second parameter is maxThreads 
