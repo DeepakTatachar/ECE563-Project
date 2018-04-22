@@ -4,6 +4,6 @@
 #include <dataStructures.hpp>
 #include <mpi.h>
 
-void spawnNewFileManager(int globalReaderThreads);
+void spawnNewFileManager(int globalReaderThreads, int numPasses);
 
 #endif

@@ -6,18 +6,20 @@ workQueueList globalReducerQueueList;
 std::vector<countTable> countTableList;
 
 omp_lock_t qListLock, fileCountLock;
+omp_lock_t qMLocks[NUM_LOCK];
 omp_lock_t qRLocks[NUM_LOCK];
+omp_lock_t gRLock;
 omp_lock_t readerFinishLock;
 omp_lock_t mapperFinishLock;
 omp_lock_t arbitrateLock;
 omp_lock_t countTableLock;
 
-int readerThreadCount, mapperThreadCount, reducerThreadCount;
+int readerThreadCount, mapperThreadCount, reducerThreadCount, numPass;
 int fileCount = 1, currentMapperThreadQ = 0, mapperThreadFinishCount = 0, readerThreadFinishCount = 0;
+int numOfPasses = 0;
 
 workQueue getMapperWQ(int i)
 {
-	std::cout << "Do not call GetMapperWQ method unless you know what you are doing" << std::endl;
 
 	omp_set_lock(&qListLock);
 
@@ -30,7 +32,6 @@ workQueue getMapperWQ(int i)
 
 workQueue getReducerWQ(int i)
 {
-	std::cout << "Do not call GetReducerWQ method unless you know what you are doing" << std::endl;
 	return globalReducerQueueList[i];
 }
 
@@ -39,10 +40,16 @@ std::string getNextSyncedFileName()
 	std::string returnValue;
 	omp_set_lock(&fileCountLock);
 	
-	if(fileCount <= 20)
+	if(fileCount < 20)
 	{
 		returnValue = std::to_string((long long int)fileCount) + ".txt";
 		fileCount++;
+	}
+	else if(fileCount == 20 && numOfPasses < numPass)
+	{
+		fileCount = 1;
+		returnValue = std::to_string((long long int)fileCount) + ".txt";
+		numOfPasses++;
 	}
 	else
 	{
@@ -53,8 +60,9 @@ std::string getNextSyncedFileName()
 	return returnValue;
 }
 
-void initializeWQStructures(int readerThreads, int mapperThreads, int reducerThreads)
+void initializeWQStructures(int readerThreads, int mapperThreads, int reducerThreads, int noPass)
 {
+	numPass = noPass;
 	readerThreadCount = readerThreads;
 	mapperThreadCount = mapperThreads;
 	reducerThreadCount = reducerThreads;
@@ -65,6 +73,12 @@ void initializeWQStructures(int readerThreads, int mapperThreads, int reducerThr
 	omp_init_lock(&arbitrateLock);
 	omp_init_lock(&mapperFinishLock);
 	omp_init_lock(&countTableLock);
+	omp_init_lock(&gRLock);
+
+	for(int i = 0; i < NUM_LOCK; i++)
+	{
+		omp_init_lock(&qMLocks[i]);
+	}
 
 	for(int i = 0; i < NUM_LOCK; i++)
 	{
@@ -86,11 +100,17 @@ void enqueueReducerChunk(int hashValue, std::vector<workItem> wItems)
 {
 	int id = hashValue % reducerThreadCount;
 
+	omp_set_lock(&gRLock);
+
+	workQueue* rQ = &(globalReducerQueueList[id]);
+
+	omp_unset_lock(&gRLock);
+
 	omp_set_lock(&qRLocks[id]);
 
 	for(std::vector<workItem>::iterator it = wItems.begin(); it != wItems.end(); ++it)
 	{
-		globalReducerQueueList[id].push(*it);
+		rQ->push(*it);
 	}
 
     	omp_unset_lock(&qRLocks[id]);
@@ -101,14 +121,19 @@ void enqueueMapperChunk(int id, std::vector<workItem> wItems)
 {
 
 	omp_set_lock(&qListLock);
-	
-	for(std::vector<workItem>::iterator it = wItems.begin(); it != wItems.end(); ++it)
-	{
-		globalWorkQueueList[id].push(*it);
-	}
+
+	workQueue* mapperQ = &(globalWorkQueueList[id]);
 
     	omp_unset_lock(&qListLock);
 	
+	omp_set_lock(&qMLocks[id]);
+
+	for(std::vector<workItem>::iterator it = wItems.begin(); it != wItems.end(); ++it)
+	{
+		mapperQ->push(*it);
+	}
+
+    	omp_unset_lock(&qMLocks[id]);
 }
 
 void readerFinshed()
@@ -154,18 +179,25 @@ std::vector<workItem> dequeueReducerChunk(int id, int chunkSize)
 {
 	std::vector<workItem> workChunk;
 
-	if(globalReducerQueueList[id].size() == 0)
+	omp_unset_lock(&gRLock);
+
+	workQueue* reducerQ = &(globalReducerQueueList[id]);
+
+	omp_unset_lock(&gRLock);
+	
+
+	if(reducerQ->size() == 0 || reducerQ->size() < (unsigned int)chunkSize)
 	{
 		return workChunk;
 	}
-	
+
 	omp_set_lock(&qRLocks[id]);
 
 	int i = chunkSize;
-	while(i-- > 0 && globalReducerQueueList[id].size() != 0)
+	while(i-- > 0 && reducerQ->size() != 0)
 	{
-		workChunk.push_back(globalReducerQueueList[id].front());
-		globalReducerQueueList[id].pop();
+		workChunk.push_back(reducerQ->front());
+		reducerQ->pop();
 	}
 
 	omp_unset_lock(&qRLocks[id]);
@@ -184,14 +216,21 @@ std::vector<workItem> dequeueMapperChunk(int id, int chunkSize)
 	
 	omp_set_lock(&qListLock);
 
-	int i = chunkSize;
-	while(i-- > 0 && globalWorkQueueList[id].size() != 0)
-	{
-		workChunk.push_back(globalWorkQueueList[id].front());
-		globalWorkQueueList[id].pop();
-	}
+	workQueue* mapperQ = &(globalWorkQueueList[id]);
 
 	omp_unset_lock(&qListLock);
+
+
+	omp_set_lock(&qMLocks[id]);
+
+	int i = chunkSize;
+	while(i-- > 0 && mapperQ->size() != 0)
+	{
+		workChunk.push_back(mapperQ->front());
+		mapperQ->pop();
+	}
+
+	omp_unset_lock(&qMLocks[id]);
 
 	return workChunk;
 }

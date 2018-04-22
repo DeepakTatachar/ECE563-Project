@@ -4,6 +4,6 @@
 #include <dataStructures.hpp>
 #include <functional>
 
-void spawnNewMapperThread(workQueue wQ, int mapperId, int reducerThreads);
+void spawnNewMapperThread(workQueue wQ, int mapperId, int reducerThreads, int CHUNK_SIZE);
 
 #endif

@@ -32,13 +32,15 @@ int main(int argc, char* argv[])
 
 	workQueueListIterator wQ;
 
-	// TODO Set number of threads from command line argument
-	omp_set_num_threads(6);
+        int readerThreads = atoi(argv[1]);
+	int mapperThreads = atoi(argv[2]);
+	int numPasses = atoi(argv[3]);
 
-        int maxThreads = omp_get_max_threads();
-        int readerThreads = 2;
-	int mapperThreads = 2;
-	int reducerThreads = 2;//maxThreads; 
+	int maxThreads = readerThreads + mapperThreads; 
+	int reducerThreads = maxThreads;
+	
+	omp_set_num_threads(maxThreads);
+
 
 	MPI_Init_thread( 0, 0, MPI_THREAD_MULTIPLE, &provided);
 	MPI_Comm_size(MPI_COMM_WORLD, &numP);
@@ -52,6 +54,8 @@ int main(int argc, char* argv[])
 
 	//std::cout << "Rank process starting " << rank << std::endl << "Max threads per node :" << maxThreads << std::endl;
 
+	double time = -MPI_Wtime();
+
 	#pragma omp parallel
 	{
 		#pragma omp master
@@ -59,7 +63,7 @@ int main(int argc, char* argv[])
 			if(rank == 0)
 			{
 				#pragma omp task
-				spawnNewFileManager(readerThreads * numP);
+				spawnNewFileManager(readerThreads * numP, numPasses);
 			}
 
 			for(int i = 0; i < readerThreads; i++)
@@ -89,6 +93,13 @@ int main(int argc, char* argv[])
 			#pragma omp taskwait
 		}
 
+	}
+
+	time += MPI_Wtime();
+
+	if(rank == 0)
+	{
+		std::cout << "Time " << time << std::endl;
 	}
 
 	// Write the results to the file

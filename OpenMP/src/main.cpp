@@ -25,16 +25,21 @@ int main(int argc, char* argv[])
 {
 	workQueueListIterator wQ;
 
-	// TODO Set number of threads from command line argument
-	omp_set_num_threads(8);
+        int readerThreads = atoi(argv[1]);
+	int mapperThreads = atoi(argv[2]);
+	int numPasses = atoi(argv[3]);
+	int chunkSize = atoi(argv[4]);
+	int reducerChunkSize = atoi(argv[5]);
 
-        int maxThreads = omp_get_max_threads();
-        int readerThreads = 16;
-	int mapperThreads = 4;
+        int maxThreads = readerThreads + mapperThreads;
+
+	omp_set_num_threads(maxThreads);
 	int reducerThreads = maxThreads; 
 
 	// Create maximum thread number of reducers so the second parameter is maxThreads 
-	initializeWQStructures(readerThreads, mapperThreads, reducerThreads);
+	initializeWQStructures(readerThreads, mapperThreads, reducerThreads, numPasses);
+
+	double time = -omp_get_wtime();
 
 	#pragma omp parallel
 	{
@@ -51,13 +56,13 @@ int main(int argc, char* argv[])
 				#pragma omp task
 				{
 					workQueue workQ = getMapperWQ(i);
-					spawnNewMapperThread(workQ, i, reducerThreads);
+					spawnNewMapperThread(workQ, i, reducerThreads, chunkSize);
 				}
 			}
 			
 		}
 
-		#pragma omp barrier
+		//#pragma omp barrier
 
 		#pragma omp master
 		{
@@ -66,7 +71,7 @@ int main(int argc, char* argv[])
 				#pragma omp task
 				{
 				  	workQueue workQ = getReducerWQ(i);
-				  	spawnNewReducerThread(i, workQ);
+				  	spawnNewReducerThread(i, workQ, reducerChunkSize);
 				}
 			}
 
@@ -74,6 +79,10 @@ int main(int argc, char* argv[])
 		}
 
 	}
+
+	time += omp_get_wtime();
+
+	std::cout << time << std::endl;
 
 	// Write the results to the file
 	writeFile("OutputFile.txt");

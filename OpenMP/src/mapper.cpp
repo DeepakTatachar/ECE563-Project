@@ -1,7 +1,8 @@
 #include <mapper.hpp>
 #include <dataStructures.hpp>
+#include <unistd.h>
 
-void spawnNewMapperThread(workQueue wQ, int mapperId, int reducerThreads)
+void spawnNewMapperThread(workQueue wQ, int mapperId, int reducerThreads, int CHUNK_SIZE)
 {
 
         std::hash<std::string> hash;

@@ -1,6 +1,6 @@
 #include <reducer.hpp>
 
-void spawnNewReducerThread(int reducerId, workQueue reducerWQ)
+void spawnNewReducerThread(int reducerId, workQueue reducerWQ, int CHUNK_SIZE)
 {
 	countTable wordCount;
 
