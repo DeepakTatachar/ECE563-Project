@@ -1,5 +1,5 @@
 #include <reader.hpp>
-#define NUM_LINES 500
+#define NUM_LINES 1000
 
 std::vector<workItem> createWorkItems(std::vector<std::string> lines)
 {
@@ -49,7 +49,7 @@ void spawnNewReaderThread()
 
 		if(inputReadFile.is_open())
 		{
-			// Read cunks of lines
+			// Read chunks of lines
 			for(int i = 0; i < NUM_LINES; i++)
 			{
 				getline(inputReadFile, line);

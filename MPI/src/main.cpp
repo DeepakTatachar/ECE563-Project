@@ -32,7 +32,7 @@ int main(int argc, char* argv[])
 
 	workQueueListIterator wQ;
 
-        int readerThreads = atoi(argv[1]);
+	int readerThreads = atoi(argv[1]);
 	int mapperThreads = atoi(argv[2]);
 	int numPasses = atoi(argv[3]);
 
