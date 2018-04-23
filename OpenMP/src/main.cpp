@@ -21,20 +21,23 @@
 #include <writer.hpp>
 #endif
 
+//Uncomment the line below to simulate serial implementation
+//#define Serial
+
 int main(int argc, char* argv[])
 {
 	workQueueListIterator wQ;
 
         int readerThreads = atoi(argv[1]);
 	int mapperThreads = atoi(argv[2]);
-	int numPasses = atoi(argv[3]);
-	int chunkSize = atoi(argv[4]);
-	int reducerChunkSize = atoi(argv[5]);
+	int reducerThreads = atoi(argv[3]); 
+	int numPasses = atoi(argv[4]);
+	int chunkSize = atoi(argv[5]);
+	int reducerChunkSize = atoi(argv[6]);
 
         int maxThreads = readerThreads + mapperThreads;
 
 	omp_set_num_threads(maxThreads);
-	int reducerThreads = maxThreads; 
 
 	// Create maximum thread number of reducers so the second parameter is maxThreads 
 	initializeWQStructures(readerThreads, mapperThreads, reducerThreads, numPasses);
@@ -51,6 +54,17 @@ int main(int argc, char* argv[])
 				spawnNewReaderThread();				
 			}
 
+		#ifdef Serial
+
+		}
+
+		#pragma omp barrier
+
+		#pragma omp master
+		{
+
+		#endif
+
 			for(int i = 0; i < mapperThreads; i++)
 			{
 				#pragma omp task
@@ -62,7 +76,7 @@ int main(int argc, char* argv[])
 			
 		}
 
-		//#pragma omp barrier
+		#pragma omp barrier
 
 		#pragma omp master
 		{

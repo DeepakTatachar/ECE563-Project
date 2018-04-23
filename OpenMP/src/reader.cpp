@@ -1,23 +1,27 @@
 #include <reader.hpp>
+#define NUM_LINES 500
 
-std::vector<workItem> createWorkItems(std::string line)
+std::vector<workItem> createWorkItems(std::vector<std::string> lines)
 {
 	std::vector<workItem> lineWorkItems;
-	std::istringstream iss(line);
 
-	do
+	for(std::vector<std::string>::iterator it = lines.begin(); it != lines.end(); ++it)
 	{
-		std::string subs;
-		iss >> subs;
-		
-		// Make sure to create a new workItem
-		// Check if the string is not all whitespaces
-		if(subs.find_first_not_of(' ') != std::string::npos)
+		std::istringstream iss(*it);	
+		do
 		{
-			lineWorkItems.push_back(workItem(subs, 1));
-		}
+			std::string subs;
+			iss >> subs;
+		
+			// Make sure to create a new workItem
+			// Check if the string is not all whitespaces
+			if(subs.find_first_not_of(' ') != std::string::npos)
+			{
+				lineWorkItems.push_back(workItem(subs, 1));
+			}
 
-	} while (iss);
+		} while (iss);
+	}
 
 	return lineWorkItems;
 }
@@ -26,6 +30,7 @@ void spawnNewReaderThread()
 {
 
 	std::string fileName = getNextSyncedFileName();
+	std::vector<std::string> lines;
 
 	while(fileName.compare(""))
 	{
@@ -44,11 +49,15 @@ void spawnNewReaderThread()
 
 		if(inputReadFile.is_open())
 		{
-			while (getline(inputReadFile, line))
+			// Read cunks of lines
+			for(int i = 0; i < NUM_LINES; i++)
 			{
-				// createWorkItems breaks the string into word and creates workItems
-				arbitrateWorkItems(createWorkItems(line));
+				getline(inputReadFile, line);
+				lines.push_back(line);
 			}
+
+			// createWorkItems breaks the string into word and creates workItems
+			arbitrateWorkItems(createWorkItems(lines));
 		}
 
 		else

@@ -4,7 +4,7 @@
 #include <list>
 #include <string>
 #include <queue>
-#include <map>
+#include <unordered_map>
 #include <vector>
 #include <cstdlib>
 #include <iostream>
@@ -29,14 +29,14 @@ typedef std::vector<workQueue> workQueueList;
 
 typedef workQueueList::const_iterator workQueueListIterator;
 
-typedef std::map<unsigned int, std::vector<workItem>> hashTable;
+typedef std::unordered_map<unsigned int, std::vector<workItem>> hashTable;
 
-typedef std::map<std::string, int> countTable;
+typedef std::unordered_map<std::string, int> countTable;
 
 // Each mapper thread creates a dictionary of word, count. 
 // This is what is accessed by the reduce threads to reduce accrosss all the mapped items
 
-typedef std::map<std::string, int> mappedDictionary;
+typedef std::unordered_map<std::string, int> mappedDictionary;
 
 // Since both the reader and mapper are accessing the workqueue.
 // This is will be a region for contention/bottleneck

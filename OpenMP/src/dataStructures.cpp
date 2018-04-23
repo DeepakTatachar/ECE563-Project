@@ -15,8 +15,7 @@ omp_lock_t arbitrateLock;
 omp_lock_t countTableLock;
 
 int readerThreadCount, mapperThreadCount, reducerThreadCount, numPass;
-int fileCount = 1, currentMapperThreadQ = 0, mapperThreadFinishCount = 0, readerThreadFinishCount = 0;
-int numOfPasses = 0;
+int fileCount = 1, currentMapperThreadQ = 0, mapperThreadFinishCount = 0, readerThreadFinishCount = 0, numOfPasses = 0;
 
 workQueue getMapperWQ(int i)
 {
@@ -100,11 +99,7 @@ void enqueueReducerChunk(int hashValue, std::vector<workItem> wItems)
 {
 	int id = hashValue % reducerThreadCount;
 
-	omp_set_lock(&gRLock);
-
 	workQueue* rQ = &(globalReducerQueueList[id]);
-
-	omp_unset_lock(&gRLock);
 
 	omp_set_lock(&qRLocks[id]);
 
@@ -119,12 +114,7 @@ void enqueueReducerChunk(int hashValue, std::vector<workItem> wItems)
 
 void enqueueMapperChunk(int id, std::vector<workItem> wItems)
 {
-
-	omp_set_lock(&qListLock);
-
 	workQueue* mapperQ = &(globalWorkQueueList[id]);
-
-    	omp_unset_lock(&qListLock);
 	
 	omp_set_lock(&qMLocks[id]);
 
@@ -179,11 +169,7 @@ std::vector<workItem> dequeueReducerChunk(int id, int chunkSize)
 {
 	std::vector<workItem> workChunk;
 
-	omp_unset_lock(&gRLock);
-
 	workQueue* reducerQ = &(globalReducerQueueList[id]);
-
-	omp_unset_lock(&gRLock);
 	
 
 	if(reducerQ->size() == 0 || reducerQ->size() < (unsigned int)chunkSize)
@@ -214,12 +200,7 @@ std::vector<workItem> dequeueMapperChunk(int id, int chunkSize)
 		return workChunk;
 	}
 	
-	omp_set_lock(&qListLock);
-
 	workQueue* mapperQ = &(globalWorkQueueList[id]);
-
-	omp_unset_lock(&qListLock);
-
 
 	omp_set_lock(&qMLocks[id]);
 
