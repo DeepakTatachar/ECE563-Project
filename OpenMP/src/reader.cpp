@@ -4,7 +4,7 @@
 std::vector<workItem> createWorkItems(std::vector<std::string> lines)
 {
 	std::vector<workItem> lineWorkItems;
-	int count = 0;
+
 	for(std::vector<std::string>::iterator it = lines.begin(); it != lines.end(); ++it)
 	{
 		std::istringstream iss(*it);	
@@ -58,7 +58,7 @@ void spawnNewReaderThread()
 				lines.push_back(line);			
 			}
 
-			arbitrateWorkItems(createWorkItems(lines, fileName));
+			arbitrateWorkItems(createWorkItems(lines));
 			lines.clear();
 
 		}
