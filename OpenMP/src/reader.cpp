@@ -1,7 +1,7 @@
 #include <reader.hpp>
 #define NUM_LINES 1000
 
-std::vector<workItem> createWorkItems(std::vector<std::string> lines, std::string fileName)
+std::vector<workItem> createWorkItems(std::vector<std::string> lines)
 {
 	std::vector<workItem> lineWorkItems;
 	int count = 0;
@@ -20,16 +20,9 @@ std::vector<workItem> createWorkItems(std::vector<std::string> lines, std::strin
 				lineWorkItems.push_back(workItem(subs, 1));
 			}
 
-			if(subs.compare("Greek") == 0)
-			{
-				count++;
-			}
-
 
 		} while (iss);
 	}
-
-	std::cout << fileName << " Count" << count << std:: endl;
 
 	return lineWorkItems;
 }
