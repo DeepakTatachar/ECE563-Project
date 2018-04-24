@@ -1,10 +1,10 @@
 #include <reader.hpp>
 #define NUM_LINES 1000
 
-std::vector<workItem> createWorkItems(std::vector<std::string> lines)
+std::vector<workItem> createWorkItems(std::vector<std::string> lines, std::string fileName)
 {
 	std::vector<workItem> lineWorkItems;
-
+	int count = 0;
 	for(std::vector<std::string>::iterator it = lines.begin(); it != lines.end(); ++it)
 	{
 		std::istringstream iss(*it);	
@@ -20,8 +20,16 @@ std::vector<workItem> createWorkItems(std::vector<std::string> lines)
 				lineWorkItems.push_back(workItem(subs, 1));
 			}
 
+			if(subs.compare("Greek") == 0)
+			{
+				count++;
+			}
+
+
 		} while (iss);
 	}
+
+	std::cout << fileName << " Count" << count << std:: endl;
 
 	return lineWorkItems;
 }
@@ -45,19 +53,30 @@ void spawnNewReaderThread()
 		// File stream handle
 		std::ifstream inputReadFile;
 
+
 		inputReadFile.open(fileName);
 
 		if(inputReadFile.is_open())
 		{
 			// Read chunks of lines
-			for(int i = 0; i < NUM_LINES; i++)
+
+			while(getline(inputReadFile, line))
 			{
-				getline(inputReadFile, line);
 				lines.push_back(line);
+				/*std::cout << line << std::endl;
+				int i = 0;
+				while(i++ <= NUM_LINES && getline(inputReadFile, line))
+				{
+					lines.push_back(line);
+				}
+
+				// createWorkItems breaks the string into word and creates workItems*/
+				
 			}
 
-			// createWorkItems breaks the string into word and creates workItems
-			arbitrateWorkItems(createWorkItems(lines));
+			arbitrateWorkItems(createWorkItems(lines, fileName));
+			lines.clear();
+
 		}
 
 		else

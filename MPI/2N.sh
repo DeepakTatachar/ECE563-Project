@@ -6,7 +6,7 @@ do
 	for mT in {2..8}
 	do
 		
-		for s in {0..6}
+		for s in {0..10}
 		do
 			echo "Running for $numP nodes $rT reader $mT mapper threads and $s data size"
 			mpirun -n $numP ./dbg.o $rT $mT $s
