@@ -62,16 +62,7 @@ void spawnNewReaderThread()
 
 			while(getline(inputReadFile, line))
 			{
-				lines.push_back(line);
-				/*std::cout << line << std::endl;
-				int i = 0;
-				while(i++ <= NUM_LINES && getline(inputReadFile, line))
-				{
-					lines.push_back(line);
-				}
-
-				// createWorkItems breaks the string into word and creates workItems*/
-				
+				lines.push_back(line);			
 			}
 
 			arbitrateWorkItems(createWorkItems(lines, fileName));

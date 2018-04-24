@@ -58,7 +58,7 @@ int main(int argc, char* argv[])
 
 		}
 
-		#pragma omp barrier
+		#pragma omp taskwait
 
 		#pragma omp master
 		{
@@ -76,7 +76,7 @@ int main(int argc, char* argv[])
 			
 		}
 
-		#pragma omp barrier
+		#pragma omp taskwait
 
 		#pragma omp master
 		{

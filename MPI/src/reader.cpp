@@ -52,14 +52,15 @@ void spawnNewReaderThread(int localReaderThreadId)
 		if(inputReadFile.is_open())
 		{
 			// Read chunks of lines
-			for(int i = 0; i < NUM_LINES; i++)
+
+			while(getline(inputReadFile, line))
 			{
-				getline(inputReadFile, line);
-				lines.push_back(line);
+				lines.push_back(line);			
 			}
 
-			// createWorkItems breaks the string into word and creates workItems
 			arbitrateWorkItems(createWorkItems(lines));
+			lines.clear();
+
 		}
 		else
 		{
